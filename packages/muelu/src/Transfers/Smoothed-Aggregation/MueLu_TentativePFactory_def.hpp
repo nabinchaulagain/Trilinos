@@ -114,8 +114,8 @@ void TentativePFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildP(Level&
   if (pL.isParameter("Nullspace name")) nspName = pL.get<std::string>("Nullspace name");
 
   RCP<Matrix> Ptentative;
-  RCP<Matrix> A              = Get<RCP<Matrix> >(fineLevel, "A");
-  RCP<Aggregates> aggregates = Get<RCP<Aggregates> >(fineLevel, "Aggregates");
+  auto A          = Get<RCP<Matrix>>(fineLevel, "A");
+  auto aggregates = Get<RCP<Aggregates>>(fineLevel, "Aggregates");
   // No coarse DoFs so we need to bail by setting Ptentattive to null and returning
   //  This level will ultimately be removed in MueLu_Hierarchy_defs.h via a resize()
   if (aggregates->GetNumGlobalAggregatesComputeIfNeeded() == 0) {
@@ -124,9 +124,9 @@ void TentativePFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildP(Level&
     return;
   }
 
-  RCP<AmalgamationInfo> amalgInfo = Get<RCP<AmalgamationInfo> >(fineLevel, "UnAmalgamationInfo");
-  RCP<MultiVector> fineNullspace  = Get<RCP<MultiVector> >(fineLevel, nspName);
-  RCP<const Map> coarseMap        = Get<RCP<const Map> >(fineLevel, "CoarseMap");
+  auto amalgInfo     = Get<RCP<AmalgamationInfo>>(fineLevel, "UnAmalgamationInfo");
+  auto fineNullspace = Get<RCP<MultiVector>>(fineLevel, nspName);
+  auto coarseMap     = Get<RCP<const Map>>(fineLevel, "CoarseMap");
   RCP<RealValuedMultiVector> fineCoords;
   if (bTransferCoordinates_) {
     fineCoords = Get<RCP<RealValuedMultiVector>>(fineLevel, "Coordinates");
