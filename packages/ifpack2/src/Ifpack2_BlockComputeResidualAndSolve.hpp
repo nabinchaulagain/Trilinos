@@ -122,10 +122,10 @@ struct ComputeResidualAndSolve_1Pass {
     auto A_block_cst = ConstUnmanaged<tpetra_block_access_view_type>(
         NULL, blocksize, blocksize);
 
-    // Get shared allocation for a local copy of x, Ax, and A
-    impl_scalar_type* local_Ax = reinterpret_cast<impl_scalar_type*>(
+    // Get shared allocation for a local copy of x, residual, and A
+    impl_scalar_type* local_residual = reinterpret_cast<impl_scalar_type*>(
         member.team_scratch(0).get_shmem(blocksize * sizeof(impl_scalar_type)));
-    impl_scalar_type* local_DinvAx = reinterpret_cast<impl_scalar_type*>(
+    impl_scalar_type* local_Dinv_residual = reinterpret_cast<impl_scalar_type*>(
         member.team_scratch(0).get_shmem(blocksize * sizeof(impl_scalar_type)));
     impl_scalar_type* local_x =
         reinterpret_cast<impl_scalar_type*>(member.thread_scratch(0).get_shmem(
@@ -138,8 +138,8 @@ struct ComputeResidualAndSolve_1Pass {
       // Initialize accumulation arrays
       Kokkos::parallel_for(Kokkos::TeamVectorRange(member, blocksize),
                            [&](const local_ordinal_type& i) {
-                             local_DinvAx[i] = 0;
-                             local_Ax[i]     = b(row + i, col);
+                             local_Dinv_residual[i] = 0;
+                             local_residual[i]     = b(row + i, col);
                            });
       member.team_barrier();
 
@@ -162,30 +162,30 @@ struct ComputeResidualAndSolve_1Pass {
                   Kokkos::ThreadVectorRange(member, blocksize),
                   [&](const local_ordinal_type& i) { local_x[i] = xx[i]; });
 
-              // matvec on block: local_Ax -= A_block_cst * local_x
+              // matvec on block: local_residual -= A_block_cst * local_x
               Kokkos::parallel_for(Kokkos::ThreadVectorRange(member, blocksize),
                                    [&](const int k0) {
                                      impl_scalar_type val = 0;
                                      for (int k1 = 0; k1 < blocksize; k1++)
                                        val += A_block_cst(k0, k1) * local_x[k1];
-                                     Kokkos::atomic_add(local_Ax + k0, -val);
+                                     Kokkos::atomic_add(local_residual + k0, -val);
                                    });
             }
           });
       member.team_barrier();
-      // Compute local_DinvAx = D^-1 * local_Ax
+      // Compute local_Dinv_residual = D^-1 * local_residual
       Kokkos::parallel_for(
           Kokkos::TeamThreadRange(member, blocksize),
           [&](const local_ordinal_type& k0) {
             Kokkos::parallel_reduce(
                 Kokkos::ThreadVectorRange(member, blocksize),
                 [&](const local_ordinal_type& k1, impl_scalar_type& update) {
-                  update += d_inv(rowidx, k0, k1) * local_Ax[k1];
+                  update += d_inv(rowidx, k0, k1) * local_residual[k1];
                 },
-                local_DinvAx[k0]);
+                local_Dinv_residual[k0]);
           });
       member.team_barrier();
-      // local_DinvAx is fully computed. Now compute the
+      // local_Dinv_residual is fully computed. Now compute the
       // squared y update norm and update y (using damping factor).
       magnitude_type colNorm;
       Kokkos::parallel_reduce(
@@ -194,7 +194,7 @@ struct ComputeResidualAndSolve_1Pass {
             // Compute the change in y (assuming damping_factor == 1) for this
             // entry.
             impl_scalar_type old_y    = x(row + k, col);
-            impl_scalar_type y_update = local_DinvAx[k] - old_y;
+            impl_scalar_type y_update = local_Dinv_residual[k] - old_y;
             magnitude_type ydiff =
                 Kokkos::ArithTraits<impl_scalar_type>::abs(y_update);
             update += ydiff * ydiff;
