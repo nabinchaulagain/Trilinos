@@ -418,8 +418,6 @@ getDiagonal(Xpetra::Matrix<Scalar, LocalOrdinal, GlobalOrdinal, Node>& A,
             DistanceFunctorType& distFunctor) {
   using scalar_type         = Scalar;
   using local_ordinal_type  = LocalOrdinal;
-  using global_ordinal_type = GlobalOrdinal;
-  using node_type           = Node;
   using ATS                 = Kokkos::ArithTraits<scalar_type>;
   using impl_scalar_type    = typename ATS::val_type;
   using implATS             = Kokkos::ArithTraits<impl_scalar_type>;
