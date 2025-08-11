@@ -483,11 +483,11 @@ namespace Intrepid2 {
                       const int Gy_index = leftEnumerationIndex_y  * rightEnumerationSpan_y + rightEnumerationIndex_y;
                       
                       const int Gz_index = 0;
-                      const Scalar & Gz = scratchView(scratchOffsetForThread + offsetsForComponentOrdinal_[2] + Gz_index);
+                      const Scalar & aGz = scratchView(scratchOffsetForThread + offsetsForComponentOrdinal_[2] + Gz_index);
                       
                       Scalar & Gy = scratchView(scratchOffsetForThread + offsetsForComponentOrdinal_[1] + Gy_index);
                                             
-                      Gy += leftValue * Gz * rightValue;
+                      Gy += leftValue * aGz * rightValue;
     //                approximateFlopCount += 3; // 2 multiplies, 1 sum
                     }
                   }
