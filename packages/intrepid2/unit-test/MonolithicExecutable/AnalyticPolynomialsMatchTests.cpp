@@ -273,11 +273,10 @@ namespace
         if (!valuesMatch)
         {
           pointPassed = false;
-          PointScalar x = inputPointsViewHost(pointOrdinal,0);
           if (op == OPERATOR_VALUE) out << "values";
           else
           {
-            int derivativeOrder = getOperatorOrder(op);
+            derivativeOrder = getOperatorOrder(op);
             if (derivativeOrder == 1)
             {
               out << "first ";
@@ -411,7 +410,6 @@ namespace
         if (!valuesMatch)
         {
           pointPassed = false;
-          double x = inputPointsViewHost(pointOrdinal,0);
           if (op == OPERATOR_VALUE) out << "values";
           else
           {
