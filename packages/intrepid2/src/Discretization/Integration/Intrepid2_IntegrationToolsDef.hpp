@@ -1413,8 +1413,6 @@ namespace Intrepid2 {
                     {
                       Scalar Gz = 0.0;
                       
-                      int Gy_index_offset = GyEntryCount * threadNumber; // thread-relative index into GyIntegrals container; store one value per z coordinate
-                      
                       if (fad_size_output_ == 0)
                       {
                         // not a Fad type; we're allow to have a vector range
@@ -2430,8 +2428,6 @@ void IntegrationTools<DeviceType>::integrate(Data<Scalar,DeviceType> integrals, 
 //    std::cout << "Completed mat-mat in " << timer->totalElapsedTime() << " seconds.\n";
 //    timer->reset();
     
-    const int leftFamilyCount     = basisValuesLeft. basisValues().numFamilies();
-    const int rightFamilyCount    = basisValuesRight.basisValues().numFamilies();
     const int leftComponentCount  = leftIsVectorValued ? basisValuesLeft. vectorData().numComponents() : 1;
     const int rightComponentCount = rightIsVectorValued ? basisValuesRight.vectorData().numComponents() : 1;
     
