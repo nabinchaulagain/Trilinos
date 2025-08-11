@@ -2428,8 +2428,6 @@ void IntegrationTools<DeviceType>::integrate(Data<Scalar,DeviceType> integrals, 
 //    std::cout << "Completed mat-mat in " << timer->totalElapsedTime() << " seconds.\n";
 //    timer->reset();
     
-    const int leftFamilyCount     = basisValuesLeft. basisValues().numFamilies();
-    const int rightFamilyCount    = basisValuesRight.basisValues().numFamilies();
     const int leftComponentCount  = leftIsVectorValued ? basisValuesLeft. vectorData().numComponents() : 1;
     const int rightComponentCount = rightIsVectorValued ? basisValuesRight.vectorData().numComponents() : 1;
     
