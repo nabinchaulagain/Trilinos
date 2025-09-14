@@ -23,15 +23,12 @@ namespace Ioss {
     auto             iter      = registry().find(type);
     if (iter == registry().end()) {
       if (registry().empty()) {
-        std::ostringstream errmsg;
-        errmsg << "ERROR: No transformations have been registered.\n"
-               << "       Was Iotr::Initializer::initialize() called?\n\n";
+        std::string errmsg = "ERROR: No transformations have been registered.\n"
+                             "       Was Iotr::Initializer::initialize() called?\n\n";
         IOSS_ERROR(errmsg);
       }
       else {
-        std::ostringstream errmsg;
-        errmsg << "ERROR: The transform named '" << type << "' is not supported.\n";
-        IOSS_ERROR(errmsg);
+        IOSS_ERROR(fmt::format("ERROR: The transform named '{}' is not supported.\n", type));
       }
     }
     else {
