@@ -385,12 +385,12 @@ void MockModelEval_C_Tpetra::evalModelImpl(
         Teuchos::null;
 
   Teuchos::RCP<const Tpetra_Vector> x_dotdot_in;
-  double omega(0.0);
+  double omega2(0.0);
   // This assumes we are using Piro second order integrator 
   if (Teuchos::nonnull(this->get_x_dotdot())) {
     const Teuchos::RCP<const Thyra::VectorBase<double>> x_dotdot = this->get_x_dotdot();
     x_dotdot_in = ConverterT::getConstTpetraVector(x_dotdot);
-    omega    = this->get_omega();
+    omega2    = this->get_omega();
   }
 
   // If using Tempus, we should have 
@@ -445,7 +445,7 @@ void MockModelEval_C_Tpetra::evalModelImpl(
     if (Teuchos::nonnull(x_dotdot_in)) {
       W_out_crs->resumeFill();
       W_out_crs->scale(-beta);
-      diag = omega;
+      diag = omega2;
       for (int i=0; i<myVecLength; i++) {
         W_out_crs->sumIntoLocalValues(i, 1, &diag, &i);
       }
