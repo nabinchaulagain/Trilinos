@@ -332,7 +332,6 @@ void ReitzingerPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildP(Level
   Teuchos::ArrayRCP<SC> v2Data = v2->getDataNonConst(0);
   for (size_t i = 0; i < v1->getMap()->getLocalNumElements(); i++ ) {
     if (v1Data[i] != 0.0)  {
-      printf("create coarse orphan edge with %d as parent .... %e %e\n", (int) (Teuchos::ScalarTraits<SC>::magnitude(v2Data[i])/v1Data[i]),v2Data[i],v1Data[i]);
       // Exponential memory reallocation, if needed
       if (current     >= Teuchos::as<LocalOrdinal>(max_edges)) {
         max_edges *= 2;
@@ -342,7 +341,6 @@ void ReitzingerPFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::BuildP(Level
       if (current / 2 + 1 >= D0_rowptr.size()) {
         D0_rowptr.resize(2 * D0_rowptr.size() + 1);
       }
-      printf("we are adding local col %d \n", (int) ownedPlusSharedCoarseNodeMap->getLocalElement( (LO) (Teuchos::ScalarTraits<SC>::magnitude(v2Data[i])/v1Data[i]) ));
 
       D0_colind[current] = ownedCoarseNodeMap->getLocalElement( (LO) (Teuchos::ScalarTraits<SC>::magnitude(v2Data[i])/v1Data[i]) );
       D0_values[current] = 1;
