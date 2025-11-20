@@ -255,11 +255,11 @@ bool runExample(const Teuchos::RCP<const Teuchos::Comm<int> >& comm) {
   bool localOk3(true);
   {
     std::vector<Scalar_t> originalLhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> originalLhsNorms2_array( originalLhsNorms2_vec.data(), originalLhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> originalLhsNorms2_array = Teuchos::arrayViewFromVector( originalLhsNorms2_vec );
     originalLhs->norm2(originalLhsNorms2_array);
 
     std::vector<Scalar_t> rebalancedLhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> rebalancedLhsNorms2_array( rebalancedLhsNorms2_vec.data(), rebalancedLhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> rebalancedLhsNorms2_array = Teuchos::arrayViewFromVector( rebalancedLhsNorms2_vec );
     rebalancedLhs->norm2(rebalancedLhsNorms2_array);
 
     for (size_t v(0); (v < numVectors) && localOk3; ++v) {
@@ -301,11 +301,11 @@ bool runExample(const Teuchos::RCP<const Teuchos::Comm<int> >& comm) {
   bool localOk4(true);
   {
     std::vector<Scalar_t> originalRhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> originalRhsNorms2_array( originalRhsNorms2_vec.data(), originalRhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> originalRhsNorms2_array = Teuchos::arrayViewFromVector( originalRhsNorms2_vec );
     originalRhs->norm2(originalRhsNorms2_array);
 
     std::vector<Scalar_t> rebalancedRhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> rebalancedRhsNorms2_array( rebalancedRhsNorms2_vec.data(), rebalancedRhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> rebalancedRhsNorms2_array = Teuchos::arrayViewFromVector( rebalancedRhsNorms2_vec );
     rebalancedRhs->norm2(rebalancedRhsNorms2_array);
 
     for (size_t v(0); (v < numVectors) && localOk4; ++v) {
@@ -347,14 +347,14 @@ bool runExample(const Teuchos::RCP<const Teuchos::Comm<int> >& comm) {
   bool localOk5(true);
   {
     std::vector<Scalar_t> originalMatLhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> originalMatLhsNorms2_array( originalMatLhsNorms2_vec.data(), originalMatLhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> originalMatLhsNorms2_array = Teuchos::arrayViewFromVector( originalMatLhsNorms2_vec );
 
     Teuchos::RCP<MultiV_t> originalMatLhs = Tpetra::createMultiVector<Scalar_t,LocalId_t,GlobalId_t>( originalMatrix->getRangeMap(), numVectors );
     originalMatrix->apply(*originalLhs, *originalMatLhs);
     originalMatLhs->norm2(originalMatLhsNorms2_array);
 
     std::vector<Scalar_t> rebalancedMatLhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> rebalancedMatLhsNorms2_array( rebalancedMatLhsNorms2_vec.data(), rebalancedMatLhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> rebalancedMatLhsNorms2_array = Teuchos::arrayViewFromVector( rebalancedMatLhsNorms2_vec );
 
     Teuchos::RCP<MultiV_t> rebalancedMatLhs = Tpetra::createMultiVector<Scalar_t,LocalId_t,GlobalId_t>( rebalancedMatrix->getRangeMap(), numVectors );
     rebalancedMatrix->apply(*rebalancedLhs, *rebalancedMatLhs);
@@ -399,7 +399,7 @@ bool runExample(const Teuchos::RCP<const Teuchos::Comm<int> >& comm) {
   bool localOk6(true);
   {
     std::vector<Scalar_t> rebalancedRhsNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> rebalancedRhsNorms2_array( rebalancedRhsNorms2_vec.data(), rebalancedRhsNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> rebalancedRhsNorms2_array = Teuchos::arrayViewFromVector( rebalancedRhsNorms2_vec );
     rebalancedRhs->norm2(rebalancedRhsNorms2_array);
 
     Teuchos::RCP<MultiV_t> rebalancedMatLhs = Tpetra::createMultiVector<Scalar_t,LocalId_t,GlobalId_t>( rebalancedMatrix->getRangeMap(), numVectors );
@@ -408,7 +408,7 @@ bool runExample(const Teuchos::RCP<const Teuchos::Comm<int> >& comm) {
     diff.update(-1., *rebalancedMatLhs, 1.); // diff = 1. * diff - 1. * rebalancedMatLhs
 
     std::vector<Scalar_t> diffNorms2_vec( numVectors );
-    Teuchos::ArrayView<Scalar_t> diffNorms2_array( diffNorms2_vec.data(), diffNorms2_vec.size() );
+    Teuchos::ArrayView<Scalar_t> diffNorms2_array = Teuchos::arrayViewFromVector( diffNorms2_vec );
     diff.norm2(diffNorms2_array);
 
     for (size_t v(0); (v < numVectors) && localOk6; ++v) {
