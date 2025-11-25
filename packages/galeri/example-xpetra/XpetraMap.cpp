@@ -20,11 +20,9 @@
 
 #include "Galeri_XpetraMaps.hpp"
 
-#ifndef XPETRA_TEST_USE_LONGLONG_GO
-#define GO int
-#else
-#define GO long long
-#endif
+#include <Tpetra_Map.hpp>
+
+using GO = Tpetra::Map<>::global_ordinal_type;
 
 int main(int argc, char *argv[]) {
   using Teuchos::RCP;
