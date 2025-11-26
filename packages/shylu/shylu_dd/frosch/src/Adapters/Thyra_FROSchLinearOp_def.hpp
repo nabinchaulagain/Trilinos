@@ -32,20 +32,18 @@ namespace Thyra {
     void FROSchLinearOp<SC,LO,GO,NO>::initialize(const RCP<const VectorSpaceBase<SC> > &rangeSpace,
                                                  const RCP<const VectorSpaceBase<SC> > &domainSpace,
                                                  const RCP<Operator<SC,LO,GO,NO> > &xpetraOperator,
-                                                 bool bIsEpetra,
                                                  bool bIsTpetra)
     {
-        initializeImpl(rangeSpace, domainSpace, xpetraOperator,bIsEpetra,bIsTpetra);
+        initializeImpl(rangeSpace, domainSpace, xpetraOperator,bIsTpetra);
     }
 
     template <class SC, class LO, class GO, class NO>
     void FROSchLinearOp<SC,LO,GO,NO>::constInitialize(const RCP<const VectorSpaceBase<SC> > &rangeSpace,
                                                       const RCP<const VectorSpaceBase<SC> > &domainSpace,
                                                       const RCP<const Operator<SC,LO,GO,NO> > &xpetraOperator,
-                                                      bool bIsEpetra,
                                                       bool bIsTpetra)
     {
-        initializeImpl(rangeSpace, domainSpace, xpetraOperator,bIsEpetra,bIsTpetra);
+        initializeImpl(rangeSpace, domainSpace, xpetraOperator,bIsTpetra);
     }
 
     template <class SC, class LO, class GO, class NO>
@@ -199,7 +197,6 @@ namespace Thyra {
     void FROSchLinearOp<SC,LO,GO,NO>::initializeImpl(const RCP<const VectorSpaceBase<SC> > &rangeSpace,
                                                      const RCP<const VectorSpaceBase<SC> > &domainSpace,
                                                      const RCP<XpetraOperator_t> &xpetraOperator,
-                                                     bool bIsEpetra,
                                                      bool bIsTpetra)
     {
 #ifdef THYRA_DEBUG
@@ -210,7 +207,6 @@ namespace Thyra {
         rangeSpace_ = rangeSpace;
         domainSpace_ = domainSpace;
         xpetraOperator_ = xpetraOperator;
-        bIsEpetra_ = bIsEpetra;
         bIsTpetra_ = bIsTpetra;
     }
 
