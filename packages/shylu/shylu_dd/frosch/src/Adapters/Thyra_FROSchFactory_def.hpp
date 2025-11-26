@@ -508,10 +508,6 @@ namespace Thyra {
 
                     RCP<const TpetraMap<LO,GO,NO> > xTpetraRepeatedMap(new const TpetraMap<LO,GO,NO>(repeatedMapTmp));
                     repeatedMap = rcp_dynamic_cast<ConstXMap>(xTpetraRepeatedMap);
-                } else {
-#ifdef HAVE_SHYLU_DDFROSCH_EPETRA
-                    FROSCH_WARNING("FROSch::FROSchFactory",comm->getRank()==0,"Cannot retrieve Epetra objects from ParameterList. Use Xpetra instead.");
-#endif
                 }
             }
             FROSCH_ASSERT(!repeatedMap.is_null(),"FROSch::FROSchFactory: repeatedMap.is_null()");
