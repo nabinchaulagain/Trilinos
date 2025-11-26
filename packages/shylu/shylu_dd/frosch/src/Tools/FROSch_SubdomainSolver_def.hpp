@@ -234,16 +234,6 @@ namespace FROSch {
     SubdomainSolver<SC,LO,GO,NO>::~SubdomainSolver()
     {
         FROSCH_TIMER_START_SUBDOMAINSOLVER(subdomainSolverTime,"SubdomainSolver::~SubdomainSolver");
-#ifdef HAVE_SHYLU_DDFROSCH_AMESOS
-        AmesosSolver_.reset();
-#endif
-#ifdef HAVE_SHYLU_DDFROSCH_EPETRA
-        EpetraLinearProblem_.reset();
-#endif
-
-#ifdef HAVE_SHYLU_DDFROSCH_EPETRA
-        Amesos2SolverEpetra_.reset();
-#endif
         Amesos2SolverTpetra_.reset();
 
 #ifdef HAVE_SHYLU_DDFROSCH_MUELU
