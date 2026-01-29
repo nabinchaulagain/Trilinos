@@ -953,16 +953,8 @@ class FastILDLFunctor
         KOKKOS_INLINE_FUNCTION
             void operator()(const Ordinal blk_index) const
             {
-#if KOKKOS_VERSION >= 40799
                 const Scalar zero = KokkosKernels::ArithTraits<Scalar>::zero();
-#else
-                const Scalar zero = Kokkos::ArithTraits<Scalar>::zero();
-#endif
-#if KOKKOS_VERSION >= 40799
                 const Scalar one = KokkosKernels::ArithTraits<Scalar>::one();
-#else
-                const Scalar one = Kokkos::ArithTraits<Scalar>::one();
-#endif
 
                 Ordinal start = blk_index * blk_size;
                 Ordinal end = start + blk_size;
