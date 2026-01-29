@@ -22,11 +22,7 @@
 #include <Kokkos_Core.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
 #include <Kokkos_Timer.hpp>
-#if KOKKOS_VERSION >= 40799
 #include <KokkosKernels_ArithTraits.hpp>
-#else
-#include <Kokkos_ArithTraits.hpp>
-#endif
 
 #include <Teuchos_CommHelpers.hpp>
 #include <Tpetra_CrsMatrix.hpp>
