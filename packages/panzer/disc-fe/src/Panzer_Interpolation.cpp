@@ -167,11 +167,7 @@ Teuchos::RCP<Thyra::LinearOpBase<double> > buildInterpolation(const Teuchos::RCP
   using Scalar = double;
 
   using STS = Teuchos::ScalarTraits<Scalar>;
-#if KOKKOS_VERSION >= 40799
   using KAT = KokkosKernels::ArithTraits<Scalar>;
-#else
-  using KAT = Kokkos::ArithTraits<Scalar>;
-#endif
   using OT  = Teuchos::OrdinalTraits<GlobalOrdinal>;
 
   using DeviceSpace = PHX::Device;
