@@ -50,11 +50,7 @@
 #ifdef HAVE_INTREPID2_KOKKOSKERNELS
 #include "KokkosBatched_QR_Serial_Internal.hpp"
 #include "KokkosBatched_ApplyQ_Serial_Internal.hpp"
-#if KOKKOS_VERSION >= 40599
 #include "KokkosBatched_Trsv_Decl.hpp"
-#else
-#include "KokkosBatched_Trsv_Serial_Internal.hpp"
-#endif
 #include "KokkosBatched_Util.hpp"
 #endif
 
