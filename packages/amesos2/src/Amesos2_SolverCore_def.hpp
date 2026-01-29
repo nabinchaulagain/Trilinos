@@ -238,11 +238,7 @@ SolverCore<ConcreteSolver,Matrix,Vector>::solve_ir(const Teuchos::Ptr<      Vect
                                                    const int maxNumIters,
                                                    const bool verbose) const
 {
-#if KOKKOS_VERSION >= 40799
   using KAT              = KokkosKernels::ArithTraits<scalar_type>;
-#else
-  using KAT              = Kokkos::ArithTraits<scalar_type>;
-#endif
   using impl_scalar_type = typename KAT::val_type;
   using magni_type       = typename KAT::mag_type;
   using host_execution_space = Kokkos::DefaultHostExecutionSpace;
