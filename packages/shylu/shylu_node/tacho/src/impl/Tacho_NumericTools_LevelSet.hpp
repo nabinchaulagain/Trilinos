@@ -4280,7 +4280,6 @@ public:
 #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
     ordinal_type q(0);
 #endif
-    exec_space exec_instance;
     for (ordinal_type p = pbeg; p < pend; ++p) {
       const ordinal_type sid = _h_level_sids(p);
       if (_h_solve_mode(sid) == 0) {
@@ -4288,7 +4287,6 @@ public:
         const ordinal_type qid = q % _nstreams;
         blas_handle_type handle_blas = getBlasHandle(qid);
         setStreamOnHandle(qid);
-        exec_instance = _exec_instances[qid];
         ++q;
 #else
         blas_handle_type handle_blas = getBlasHandle();
