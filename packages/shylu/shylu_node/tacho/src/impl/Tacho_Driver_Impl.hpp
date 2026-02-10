@@ -451,7 +451,7 @@ template <typename VT, typename DT> int Driver<VT, DT>::factorize(const value_ty
     Kokkos::RangePolicy<exec_space> range_policy(0, m);
 
     // Compute alpha = ||A||_2
-    value_type alpha(0.0);
+    value_type alpha(zero);
     //for (size_t i=0; i<ax.extent(0); i++) alpha += arith_traits::conj(ax(i)) * ax(i);
     const auto ap = _ap;
     const auto aj = _aj;
@@ -468,7 +468,6 @@ template <typename VT, typename DT> int Driver<VT, DT>::factorize(const value_ty
         }
       });
     // * atomic_sum row-sums
-    alpha = zero;
     Kokkos::parallel_reduce(
       range_policy, KOKKOS_LAMBDA (int i, value_type &tmp) {
         tmp += dv(i);
