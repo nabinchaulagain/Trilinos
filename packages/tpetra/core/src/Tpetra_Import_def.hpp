@@ -1321,8 +1321,7 @@ Import<LocalOrdinal, GlobalOrdinal, Node>::
   using import_type = Import<LO, GO, Node>;
   using size_type   = typename Array<GO>::size_type;
 
-  std::string label = std::string("Tpetra::Import::setUnion");
-  auto MM           = Teuchos::rcp(new Tpetra::Details::ProfilingRegion(label.c_str()));
+  auto MM = Teuchos::rcp(new Tpetra::Details::ProfilingRegion("Tpetra::Import::setUnion"));
 
   RCP<const map_type> srcMap  = this->getSourceMap();
   RCP<const map_type> tgtMap1 = this->getTargetMap();
@@ -1424,8 +1423,7 @@ Import<LocalOrdinal, GlobalOrdinal, Node>::
   }
 
   MM       = Teuchos::null;
-  label    = "Tpetra::Import::setUnion : Construct Target Map";
-  auto MM2 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion(label.c_str()));
+  auto MM2 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion("Tpetra::Import::setUnion : Construct Target Map"));
 
   // Create the union target Map.
   const GST INVALID       = Teuchos::OrdinalTraits<GST>::invalid();
@@ -1434,8 +1432,7 @@ Import<LocalOrdinal, GlobalOrdinal, Node>::
       rcp(new map_type(INVALID, unionTgtGIDs(), indexBaseUnion, comm));
 
   MM2      = Teuchos::null;
-  label    = "Tpetra::Import::setUnion : Export GIDs";
-  auto MM3 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion(label.c_str()));
+  auto MM3 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion("Tpetra::Import::setUnion : Export GIDs"));
 
   // Thus far, we have computed the following in the union Import:
   //   - numSameIDs
@@ -1535,8 +1532,7 @@ Import<LocalOrdinal, GlobalOrdinal, Node>::
 
   // Create and return the union Import. This uses the "expert" constructor
   MM3      = Teuchos::null;
-  label    = "Tpetra::Import::setUnion : Construct Import";
-  auto MM4 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion(label.c_str()));
+  auto MM4 = Teuchos::rcp(new Tpetra::Details::ProfilingRegion("Tpetra::Import::setUnion : Construct Import"));
   RCP<const import_type> unionImport =
       rcp(new import_type(srcMap, unionTgtMap,
                           as<size_t>(numSameIDsUnion),
