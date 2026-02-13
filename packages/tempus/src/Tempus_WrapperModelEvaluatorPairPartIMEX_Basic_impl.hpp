@@ -370,7 +370,7 @@ WrapperModelEvaluatorPairPartIMEX_Basic<Scalar>::getNominalValues() const
 {
   typedef Thyra::ModelEvaluatorBase MEB;
   MEB::InArgsSetup<Scalar> inArgs = this->createInArgs();
-  return std::move(inArgs);
+  return inArgs;
 }
 
 template <typename Scalar>
@@ -406,13 +406,13 @@ WrapperModelEvaluatorPairPartIMEX_Basic<Scalar>::createOutArgsImpl() const
     MEB::OutArgsSetup<Scalar> outArgs(implicitOutArgs);
     outArgs.setModelEvalDescription(this->description());
     outArgs.set_Np_Ng(np, implicitOutArgs.Ng());
-    return std::move(outArgs);
+    return outArgs;
   }
 
   MEB::OutArgsSetup<Scalar> outArgs(explicitOutArgs);
   outArgs.setModelEvalDescription(this->description());
   outArgs.set_Np_Ng(np, explicitOutArgs.Ng());
-  return std::move(outArgs);
+  return outArgs;
 }
 
 template <typename Scalar>
