@@ -385,13 +385,13 @@ WrapperModelEvaluatorPairPartIMEX_Basic<Scalar>::createInArgs() const
     MEB::InArgsSetup<Scalar> inArgs(implicitInArgs);
     inArgs.setModelEvalDescription(this->description());
     inArgs.set_Np(np);
-    return std::move(inArgs);
+    return inArgs;
   }
 
   MEB::InArgsSetup<Scalar> inArgs(explicitInArgs);
   inArgs.setModelEvalDescription(this->description());
   inArgs.set_Np(np);
-  return std::move(inArgs);
+  return inArgs;
 }
 
 template <typename Scalar>
