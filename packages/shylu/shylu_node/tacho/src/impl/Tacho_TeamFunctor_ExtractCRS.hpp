@@ -132,7 +132,6 @@ public:
       // extract this supernode
       const auto &s  = _info.supernodes(sid);
       const ordinal_type offm = (p == _pend ? _m : s.row_begin);
-      #define TACHO_INSERT_DIAGONALS
       // last row of previous supernode
       ordinal_type row_id = 0;
       if (p > _pbeg) {
@@ -261,7 +260,6 @@ public:
       const auto &s  = _info.supernodes(sid);
       const ordinal_type offm = (p == _pend ? _m : s.row_begin);
       const ordinal_type offn = (p == _pend ?  0 : s.gid_col_begin);
-      #ifdef TACHO_INSERT_DIAGONALS
       // last row of previous supernode
       ordinal_type row_id = 0;
       if (p > _pbeg) {
@@ -272,7 +270,6 @@ public:
       // add diagonal entry
       Kokkos::parallel_for(Kokkos::TeamThreadRange(member, offm-row_id),
                           [&](const int& i) { Kokkos::atomic_add(&(_rowptr[row_id+i+1]), 1); });
-      #endif
       if (p < _pend) {
         // extract this supernode (AL is stored by col)
         if (s.m > 0) {
