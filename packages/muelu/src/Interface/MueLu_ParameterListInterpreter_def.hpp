@@ -208,34 +208,16 @@ static inline void test_and_set_param_2list(const Teuchos::ParameterList& paramL
 }
 
 template <class paramType>
+static inline void test_and_set_var_from_masterlist(Teuchos::ParameterList& paramList, const std::string& paramName) {
+  if (!paramList.isParameter(paramName)) {
+    paramList.set(paramName, MasterList::getDefault<paramType>(paramName));
+  }
+}
+
+template <class paramType>
 static inline bool test_param_2list(const Teuchos::ParameterList& paramList, const Teuchos::ParameterList& defaultList, const std::string& paramName, const paramType& cmpValue) {
   return (cmpValue == set_var_2list<paramType>(paramList, defaultList, paramName));
 }
-
-#define MUELU_SET_VAR_2LIST(paramList, defaultList, paramName, paramType, varName) \
-  paramType varName;                                                               \
-  if (paramList.isParameter(paramName))                                            \
-    varName = paramList.get<paramType>(paramName);                                 \
-  else if (defaultList.isParameter(paramName))                                     \
-    varName = defaultList.get<paramType>(paramName);                               \
-  else                                                                             \
-    varName = MasterList::getDefault<paramType>(paramName);
-
-// Set parameter in a list if it is present in any of two lists
-// User case: set factory specific parameter, first checking for a level-specific value, then cheking root level value
-#define MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, paramName, paramType, listWrite)                                                     \
-  try {                                                                                                                                             \
-    if (paramList.isParameter(paramName))                                                                                                           \
-      listWrite.set(paramName, paramList.get<paramType>(paramName));                                                                                \
-    else if (defaultList.isParameter(paramName))                                                                                                    \
-      listWrite.set(paramName, defaultList.get<paramType>(paramName));                                                                              \
-  } catch (Teuchos::Exceptions::InvalidParameterType&) {                                                                                            \
-    TEUCHOS_TEST_FOR_EXCEPTION_PURE_MSG(true, Teuchos::Exceptions::InvalidParameterType,                                                            \
-                                        "Error: parameter \"" << paramName << "\" must be of type " << Teuchos::TypeNameTraits<paramType>::name()); \
-  }
-
-#define MUELU_TEST_PARAM_2LIST(paramList, defaultList, paramName, paramType, cmpValue) \
-  (cmpValue == (paramList.isParameter(paramName) ? paramList.get<paramType>(paramName) : (defaultList.isParameter(paramName) ? defaultList.get<paramType>(paramName) : MasterList::getDefault<paramType>(paramName))))
 
 #define MUELU_KOKKOS_FACTORY(varName, oldFactory, newFactory) \
   RCP<Factory> varName;                                       \
@@ -1057,9 +1039,9 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
                                                 FactoryManager& manager, int levelID, std::vector<keep_pair>& keeps) const {
   using strings = std::unordered_set<std::string>;
 
-  MUELU_SET_VAR_2LIST(paramList, defaultList, "reuse: type", std::string, reuseType);
+  auto reuseType = set_var_2list<std::string>(paramList, defaultList, "reuse: type");
 
-  MUELU_SET_VAR_2LIST(paramList, defaultList, "aggregation: type", std::string, aggType);
+  auto aggType = set_var_2list<std::string>(paramList, defaultList, "aggregation: type");
   TEUCHOS_TEST_FOR_EXCEPTION(!strings({"uncoupled", "coupled", "brick", "matlab", "notay", "classical"}).count(aggType),
                              Exceptions::RuntimeError, "Unknown aggregation algorithm: \"" << aggType << "\". Please consult User's Guide.");
 
@@ -1073,7 +1055,7 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   // Aggregation graph
   RCP<Factory> dropFactory;
 
-  if (MUELU_TEST_PARAM_2LIST(paramList, paramList, "aggregation: drop scheme", std::string, "matlab")) {
+  if (test_param_2list<std::string>(paramList, paramList, "aggregation: drop scheme", "matlab")) {
 #ifdef HAVE_MUELU_MATLAB
     dropFactory             = rcp(new SingleLevelMatlabFactory());
     ParameterList socParams = paramList.sublist("strength-of-connection: params");
@@ -1081,52 +1063,52 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
 #else
     throw std::runtime_error("Cannot use MATLAB evolutionary strength-of-connection - MueLu was not configured with MATLAB support.");
 #endif
-  } else if (MUELU_TEST_PARAM_2LIST(paramList, paramList, "aggregation: drop scheme", std::string, "unsupported vector smoothing")) {
+  } else if (test_param_2list<std::string>(paramList, paramList, "aggregation: drop scheme", "unsupported vector smoothing")) {
     dropFactory = rcp(new MueLu::SmooVecCoalesceDropFactory<SC, LO, GO, NO>());
     ParameterList dropParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: drop scheme", std::string, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: block diagonal: interleaved blocksize", int, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: number of random vectors", int, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: number of times to pre or post smooth", int, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: penalty parameters", Teuchos::Array<double>, dropParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: drop scheme", dropParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: block diagonal: interleaved blocksize", dropParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: number of random vectors", dropParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: number of times to pre or post smooth", dropParams);
+    test_and_set_param_2list<Teuchos::Array<double>>(paramList, defaultList, "aggregation: penalty parameters", dropParams);
     dropFactory->SetParameterList(dropParams);
   } else {
     MUELU_KOKKOS_FACTORY_NO_DECL(dropFactory, CoalesceDropFactory, CoalesceDropFactory_kokkos);
     ParameterList dropParams;
     if (!rcp_dynamic_cast<CoalesceDropFactory>(dropFactory).is_null())
       dropParams.set("lightweight wrap", true);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: drop scheme", std::string, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: row sum drop tol", double, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: block diagonal: interleaved blocksize", int, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: drop tol", double, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: use ml scaling of drop tol", bool, dropParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: drop scheme", dropParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: row sum drop tol", dropParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: block diagonal: interleaved blocksize", dropParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: drop tol", dropParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: use ml scaling of drop tol", dropParams);
 
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: Dirichlet threshold", double, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: greedy Dirichlet", bool, dropParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: Dirichlet threshold", dropParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: greedy Dirichlet", dropParams);
     if (useKokkos_)
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: distance laplacian metric", std::string, dropParams);
+      test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: distance laplacian metric", dropParams);
 #ifdef HAVE_MUELU_COALESCEDROP_ALLOW_OLD_PARAMETERS
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: distance laplacian algo", std::string, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: classical algo", std::string, dropParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: distance laplacian algo", dropParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: classical algo", dropParams);
 #endif
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: distance laplacian directional weights", Teuchos::Array<double>, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: coloring: localize color graph", bool, dropParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: dropping may create Dirichlet", bool, dropParams);
+    test_and_set_param_2list<Teuchos::Array<double>>(paramList, defaultList, "aggregation: distance laplacian directional weights", dropParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: coloring: localize color graph", dropParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: dropping may create Dirichlet", dropParams);
     if (useKokkos_) {
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: use blocking", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: symmetrize graph after dropping", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: strength-of-connection: matrix", std::string, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: strength-of-connection: measure", std::string, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: use lumping", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: reuse graph", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: reuse eigenvalue", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: use root stencil", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: Dirichlet threshold", double, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: use spread lumping", bool, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: lumping choice", std::string, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: spread lumping diag dom growth factor", double, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: spread lumping diag dom cap", double, dropParams);
-      MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "filtered matrix: count negative diagonals", bool, dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: use blocking", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: symmetrize graph after dropping", dropParams);
+      test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: strength-of-connection: matrix", dropParams);
+      test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: strength-of-connection: measure", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: use lumping", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: reuse graph", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: reuse eigenvalue", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: use root stencil", dropParams);
+      test_and_set_param_2list<double>(paramList, defaultList, "filtered matrix: Dirichlet threshold", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: use spread lumping", dropParams);
+      test_and_set_param_2list<std::string>(paramList, defaultList, "filtered matrix: lumping choice", dropParams);
+      test_and_set_param_2list<double>(paramList, defaultList, "filtered matrix: spread lumping diag dom growth factor", dropParams);
+      test_and_set_param_2list<double>(paramList, defaultList, "filtered matrix: spread lumping diag dom cap", dropParams);
+      test_and_set_param_2list<bool>(paramList, defaultList, "filtered matrix: count negative diagonals", dropParams);
     }
 
 #ifdef HAVE_MUELU_COALESCEDROP_ALLOW_OLD_PARAMETERS
@@ -1135,17 +1117,10 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
          ((dropParams.get<std::string>("aggregation: drop scheme") != "point-wise") && (dropParams.get<std::string>("aggregation: drop scheme") != "cut-drop")))) {
       Teuchos::ParameterList dropParamsWithDefaults(dropParams);
 
-#define MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST(paramList, paramName, paramType) \
-  if (!paramList.isParameter(paramName)) {                                      \
-    paramList.set(paramName, MasterList::getDefault<paramType>(paramName));     \
-  }
-
-      MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST(dropParamsWithDefaults, "aggregation: drop scheme", std::string);
-      MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST(dropParamsWithDefaults, "aggregation: strength-of-connection: matrix", std::string);
-      MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST(dropParamsWithDefaults, "aggregation: strength-of-connection: measure", std::string);
-      MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST(dropParamsWithDefaults, "aggregation: use blocking", bool);
-
-#undef MUELU_TEST_AND_SET_VAR_FROM_MASTERLIST
+      test_and_set_var_from_masterlist<std::string>(dropParamsWithDefaults, "aggregation: drop scheme");
+      test_and_set_var_from_masterlist<std::string>(dropParamsWithDefaults, "aggregation: strength-of-connection: matrix");
+      test_and_set_var_from_masterlist<std::string>(dropParamsWithDefaults, "aggregation: strength-of-connection: measure");
+      test_and_set_var_from_masterlist<bool>(dropParamsWithDefaults, "aggregation: use blocking");
 
       // We are using the old style of dropping params
       TEUCHOS_TEST_FOR_EXCEPTION(dropParams.isParameter("aggregation: strength-of-connection: matrix") ||
@@ -1165,7 +1140,7 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
       std::string drop_scheme = dropParams.get<std::string>("aggregation: drop scheme");
       if (drop_scheme == "block diagonal colored signed classical")
         manager.SetFactory("Coloring Graph", dropFactory);
-      if ((MUELU_TEST_PARAM_2LIST(dropParams, defaultList, "aggregation: use blocking", bool, true)) ||
+      if ((test_param_2list<bool>(dropParams, defaultList, "aggregation: use blocking", true)) ||
           (drop_scheme.find("block diagonal") != std::string::npos || drop_scheme == "signed classical")) {
         if (levelID > 0)
           dropFactory->SetFactory("BlockNumber", this->GetFactoryManager(levelID - 1)->GetFactory("BlockNumber"));
@@ -1187,34 +1162,34 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   if (aggType == "uncoupled") {
     aggFactory = rcp(new UncoupledAggregationFactory());
     ParameterList aggParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: ordering", std::string, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: min agg size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: max agg size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: max selected neighbors", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: backend", std::string, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: phase 1 algorithm", std::string, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: deterministic", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: coloring algorithm", std::string, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: enable phase 1", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: enable phase 2a", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: enable phase 2b", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: enable phase 3", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: match ML phase1", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: match ML phase2a", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: match ML phase2b", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: phase2a agg factor", double, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: preserve Dirichlet points", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: error on nodes with no on-rank neighbors", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: phase3 avoid singletons", bool, aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: ordering", aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: min agg size", aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: max agg size", aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: max selected neighbors", aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: backend", aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: phase 1 algorithm", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: deterministic", aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: coloring algorithm", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: enable phase 1", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: enable phase 2a", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: enable phase 2b", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: enable phase 3", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: match ML phase1", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: match ML phase2a", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: match ML phase2b", aggParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: phase2a agg factor", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: preserve Dirichlet points", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: error on nodes with no on-rank neighbors", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: phase3 avoid singletons", aggParams);
     aggFactory->SetParameterList(aggParams);
     // make sure that the aggregation factory has all necessary data
     aggFactory->SetFactory("DofsPerNode", manager.GetFactory("Graph"));
     aggFactory->SetFactory("Graph", manager.GetFactory("Graph"));
     //      aggFactory->SetFactory("UnAmalgamationInfo", manager.GetFactory("UnAmalgamationInfo"));
 
-    if (MUELU_TEST_PARAM_2LIST(paramList, defaultList, "aggregation: coloring algorithm", std::string, "mis2 aggregation") ||
-        MUELU_TEST_PARAM_2LIST(paramList, defaultList, "aggregation: coloring algorithm", std::string, "mis2 coarsening")) {
-      if (MUELU_TEST_PARAM_2LIST(paramList, defaultList, "aggregation: symmetrize graph after dropping", bool, false))
+    if (test_param_2list<std::string>(paramList, defaultList, "aggregation: coloring algorithm", "mis2 aggregation") ||
+        test_param_2list<std::string>(paramList, defaultList, "aggregation: coloring algorithm", "mis2 coarsening")) {
+      if (test_param_2list<bool>(paramList, defaultList, "aggregation: symmetrize graph after dropping", false))
         TEUCHOS_TEST_FOR_EXCEPTION(true,
                                    Exceptions::RuntimeError,
                                    "MIS2 algorithms require the use of a symmetrized graph. Please set \"aggregation: symmetrize graph after dropping\" to \"true\".");
@@ -1222,12 +1197,12 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   } else if (aggType == "brick") {
     aggFactory = rcp(new BrickAggregationFactory());
     ParameterList aggParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick x size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick y size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick z size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick x Dirichlet", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick y Dirichlet", bool, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: brick z Dirichlet", bool, aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: brick x size", aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: brick y size", aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: brick z size", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: brick x Dirichlet", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: brick y Dirichlet", aggParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: brick z Dirichlet", aggParams);
     aggFactory->SetParameterList(aggParams);
 
     // Unlike other factories, BrickAggregationFactory makes the Graph/DofsPerNode itself
@@ -1244,11 +1219,11 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
     // Map and coloring
     RCP<Factory> mapFact = rcp(new ClassicalMapFactory());
     ParameterList mapParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: deterministic", bool, mapParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: coloring algorithm", std::string, mapParams);
+    test_and_set_param_2list<bool>(paramList, defaultList, "aggregation: deterministic", mapParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: coloring algorithm", mapParams);
 
     ParameterList tempParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: drop scheme", std::string, tempParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: drop scheme", tempParams);
     std::string drop_algo = tempParams.get<std::string>("aggregation: drop scheme");
     if (drop_algo == "block diagonal colored signed classical") {
       mapParams.set("aggregation: coloring: use color graph", true);
@@ -1263,8 +1238,8 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
 
     aggFactory = rcp(new ClassicalPFactory());
     ParameterList aggParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: classical scheme", std::string, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: drop scheme", std::string, aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: classical scheme", aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: drop scheme", aggParams);
     aggFactory->SetParameterList(aggParams);
     aggFactory->SetFactory("FC Splitting", manager.GetFactory("FC Splitting"));
     aggFactory->SetFactory("CoarseMap", manager.GetFactory("CoarseMap"));
@@ -1290,10 +1265,10 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   } else if (aggType == "notay") {
     aggFactory = rcp(new NotayAggregationFactory());
     ParameterList aggParams;
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: pairwise: size", int, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: pairwise: tie threshold", double, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: Dirichlet threshold", double, aggParams);
-    MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "aggregation: ordering", std::string, aggParams);
+    test_and_set_param_2list<int>(paramList, defaultList, "aggregation: pairwise: size", aggParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: pairwise: tie threshold", aggParams);
+    test_and_set_param_2list<double>(paramList, defaultList, "aggregation: Dirichlet threshold", aggParams);
+    test_and_set_param_2list<std::string>(paramList, defaultList, "aggregation: ordering", aggParams);
     aggFactory->SetParameterList(aggParams);
     aggFactory->SetFactory("DofsPerNode", manager.GetFactory("Graph"));
     aggFactory->SetFactory("Graph", manager.GetFactory("Graph"));
@@ -1320,8 +1295,8 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
     ptentParams.sublist("matrixmatrix: kernel params", false) = paramList.sublist("matrixmatrix: kernel params");
   if (defaultList.isSublist("matrixmatrix: kernel params"))
     ptentParams.sublist("matrixmatrix: kernel params", false) = defaultList.sublist("matrixmatrix: kernel params");
-  MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "tentative: calculate qr", bool, ptentParams);
-  MUELU_TEST_AND_SET_PARAM_2LIST(paramList, defaultList, "tentative: build coarse coordinates", bool, ptentParams);
+  test_and_set_param_2list<bool>(paramList, defaultList, "tentative: calculate qr", ptentParams);
+  test_and_set_param_2list<bool>(paramList, defaultList, "tentative: build coarse coordinates", ptentParams);
   Ptent->SetParameterList(ptentParams);
   Ptent->SetFactory("Aggregates", manager.GetFactory("Aggregates"));
   Ptent->SetFactory("CoarseMap", manager.GetFactory("CoarseMap"));
@@ -2294,9 +2269,6 @@ void ParameterListInterpreter<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
 #endif
 }
 
-#undef MUELU_SET_VAR_2LIST
-#undef MUELU_TEST_AND_SET_PARAM_2LIST
-#undef MUELU_TEST_PARAM_2LIST
 #undef MUELU_KOKKOS_FACTORY
 
 size_t LevenshteinDistance(const char* s, size_t len_s, const char* t, size_t len_t);
