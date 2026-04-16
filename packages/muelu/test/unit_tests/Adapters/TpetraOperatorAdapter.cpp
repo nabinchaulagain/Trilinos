@@ -180,6 +180,18 @@ void expectEquivalentPreconditioner(Teuchos::FancyOStream& out,
                         precB.GetHierarchy()->GetNumLevels(), out, success);
 }
 
+template <class SC, class LO, class GO, class NO>
+void expectEquivalentHierarchyLevels(Teuchos::FancyOStream& out,
+                                     bool& success,
+                                     MueLu::TpetraOperator<SC, LO, GO, NO>& precA,
+                                     MueLu::TpetraOperator<SC, LO, GO, NO>& precB,
+                                     const std::string& label) {
+  const int levelsA = precA.GetHierarchy()->GetNumLevels();
+  const int levelsB = precB.GetHierarchy()->GetNumLevels();
+  out << label << ": numLevels A=" << levelsA << ", B=" << levelsB << std::endl;
+  TEUCHOS_TEST_EQUALITY(levelsA, levelsB, out, success);
+}
+
 }  // namespace
 
 TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TpetraOperator, Apply, Scalar, LocalOrdinal, GlobalOrdinal, Node) {
@@ -409,30 +421,13 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(TpetraOperator, CreatePreconditioner_ConstOper
   out << "version: " << MueLu::Version() << std::endl;
 
 #if defined(HAVE_MUELU_IFPACK2) && defined(HAVE_MUELU_AMESOS2)
-  typedef Tpetra::CrsMatrix<SC, LO, GO, NO> tpetra_crsmatrix_type;
-  typedef Tpetra::Operator<SC, LO, GO, NO> tpetra_operator_type;
-
   if (TestHelpers::Parameters::getLib() == Xpetra::UseTpetra) {
-    RCP<const Teuchos::Comm<int>> comm = TestHelpers::Parameters::getDefaultComm();
-    RCP<Matrix> Op                     = TestHelpers::TestFactory<SC, LO, GO, NO>::Build1DPoisson(2187 * comm->getSize());
-    RCP<tpetra_crsmatrix_type> tpA     = Xpetra::toTpetra(Op);
+    ConstOverloadFixture<SC, LO, GO, NO> fx(/*rowsPerRank=*/2187);
+    Teuchos::ParameterList baseList;
+    auto precs = fx.makeNonConstVsConstOperator(baseList);
 
-    RCP<tpetra_operator_type> opNonConst(tpA);
-    RCP<const tpetra_operator_type> opConst = Teuchos::rcp_implicit_cast<const tpetra_operator_type>(tpA);
-
-    Teuchos::ParameterList mueluList;
-
-    Teuchos::ParameterList paramListNonConst(mueluList);
-    Teuchos::ParameterList paramListConst(mueluList);
-    RCP<MueLu::TpetraOperator<SC, LO, GO, NO>> precNonConst =
-        MueLu::CreateTpetraPreconditioner<SC, LO, GO, NO>(opNonConst, paramListNonConst);
-    RCP<MueLu::TpetraOperator<SC, LO, GO, NO>> precConst =
-        MueLu::CreateTpetraPreconditioner<SC, LO, GO, NO>(opConst, paramListConst);
-
-    const int levelsNC = precNonConst->GetHierarchy()->GetNumLevels();
-    const int levelsC  = precConst->GetHierarchy()->GetNumLevels();
-    out << "numLevels non-const handle: " << levelsNC << ", const handle: " << levelsC << std::endl;
-    TEST_EQUALITY(levelsNC, levelsC);
+    expectEquivalentHierarchyLevels(out, success, *precs.first, *precs.second,
+                                    "CreatePreconditioner_ConstOperator_HierarchyLevels");
   } else {
     out << "This test is enabled only for linAlgebra=Tpetra." << std::endl;
   }
