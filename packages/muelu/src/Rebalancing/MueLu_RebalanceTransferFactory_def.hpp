@@ -294,7 +294,7 @@ void RebalanceTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(
       RCP<xdMV> permutedCoords = Xpetra::MultiVectorFactory<typename Teuchos::ScalarTraits<Scalar>::magnitudeType, LO, GO, NO>::Build(coordImporter->getTargetMap(), coords->getNumVectors(), false);
       permutedCoords->doImport(*coords, *coordImporter, Xpetra::INSERT);
 
-      if (pL.isParameter("repartition: use subcommunicators") == true && pL.get<bool>("repartition: use subcommunicators") == true) {
+      if (pL.isParameter("repartition: use subcommunicators") && pL.get<bool>("repartition: use subcommunicators")) {
         if (blkSize == 1) {
           if (!subCommMapConstructed) {
             subCommMap            = permutedCoords->getMap()->removeEmptyProcesses();
@@ -343,7 +343,7 @@ void RebalanceTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(
       RCP<MultiVector> permutedMaterial = MultiVectorFactory::Build(materialImporter->getTargetMap(), material->getNumVectors(), false);
       permutedMaterial->doImport(*material, *materialImporter, Xpetra::INSERT);
 
-      if (pL.get<bool>("repartition: use subcommunicators") == true) {
+      if (pL.get<bool>("repartition: use subcommunicators")) {
         if (blkSize == 1) {
           if (!subCommMapConstructed) {
             subCommMap            = permutedMaterial->getMap()->removeEmptyProcesses();
@@ -372,7 +372,7 @@ void RebalanceTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(
       RCP<LocalOrdinalVector> permutedBlockNumber = LocalOrdinalVectorFactory::Build(importer->getTargetMap(), false);
       permutedBlockNumber->doImport(*BlockNumber, *importer, Xpetra::INSERT);
 
-      if (pL.isParameter("repartition: use subcommunicators") == true && pL.get<bool>("repartition: use subcommunicators") == true) {
+      if (pL.isParameter("repartition: use subcommunicators") && pL.get<bool>("repartition: use subcommunicators")) {
         if (!subCommMapConstructed) {
           subCommMap            = permutedBlockNumber->getMap()->removeEmptyProcesses();
           subCommMapConstructed = true;
@@ -399,7 +399,7 @@ void RebalanceTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(
       RCP<MultiVector> permutedNullspace = MultiVectorFactory::Build(importer->getTargetMap(), nullspace->getNumVectors(), false);
       permutedNullspace->doImport(*nullspace, *importer, Xpetra::INSERT);
 
-      if (pL.get<bool>("repartition: use subcommunicators") == true) {
+      if (pL.get<bool>("repartition: use subcommunicators")) {
         if (!subCommMapConstructed) {
           subCommMap            = permutedNullspace->getMap()->removeEmptyProcesses();
           subCommMapConstructed = true;
@@ -414,7 +414,7 @@ void RebalanceTransferFactory<Scalar, LocalOrdinal, GlobalOrdinal, Node>::Build(
     }
 
   } else {
-    if (pL.get<bool>("transpose: use implicit") == false) {
+    if (!pL.get<bool>("transpose: use implicit")) {
       RCP<Matrix> originalR = Get<RCP<Matrix> >(coarseLevel, "R");
 
       if (implicit || importer.is_null()) {
