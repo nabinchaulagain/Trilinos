@@ -241,8 +241,6 @@ bool DefaultBlockedLinearOp<Scalar>::blockIsConst(
   ) const
 {
   if (!blockExists(i, j)) return false;
-  assertBlockFillIsActive(false);
-  assertBlockRowCol(i,j);
   return Ops_[numRowBlocks_*j+i].isConst();
 }
 
