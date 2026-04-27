@@ -240,12 +240,11 @@ class TekoSmoother<double, int, GlobalOrdinal, Node> : public SmootherPrototype<
   @param InitialGuessIsZero whether the initial guess is zero
   */
   void Apply(MultiVector &X, const MultiVector &B, bool InitialGuessIsZero = false) const {
-    TEUCHOS_TEST_FOR_EXCEPTION(this->IsSetup() == false, Exceptions::RuntimeError,
+    TEUCHOS_TEST_FOR_EXCEPTION(!this->IsSetup(), Exceptions::RuntimeError,
                                "MueLu::TekoSmoother::Apply(): Setup() has not been called");
 
-    Teuchos::RCP<const Teuchos::Comm<int> > comm = X.getMap()->getComm();
-
-    Teuchos::RCP<const MapExtractor> rgMapExtractor = bA_->getRangeMapExtractor();
+    auto comm           = X.getMap()->getComm();
+    auto rgMapExtractor = bA_->getRangeMapExtractor();
     TEUCHOS_TEST_FOR_EXCEPT(Teuchos::is_null(rgMapExtractor));
 
     using STS = Teuchos::ScalarTraits<Scalar>;
