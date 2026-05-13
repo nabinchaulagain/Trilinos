@@ -843,19 +843,9 @@ namespace BaskerNS
   )
   {
     //printf("===Basker this strong comp called====");
-
-    typedef long int   l_int;
-    
-    INT_1DARRAY perm_in;
-    MALLOC_INT_1DARRAY(perm_in, M.ncol);
     MALLOC_INT_1DARRAY(perm, M.ncol);
     //JDB:Note, this needs to be changed just fixed for int/long
     MALLOC_INT_1DARRAY(CC, M.ncol+1);
-
-    for(l_int i = 0; i < M.ncol; i++)
-    {
-      perm_in(i) = i;
-    }
 
     if(Options.incomplete == BASKER_TRUE || Options.partial_facto != 0)
     {
@@ -871,6 +861,15 @@ namespace BaskerNS
       CC(0) = 0;
       CC(1) = M.ncol;
       return 0;
+    }
+
+    INT_1DARRAY perm_in;
+    MALLOC_INT_1DARRAY(perm_in, M.ncol);
+
+    typedef long int   l_int;
+    for(l_int i = 0; i < M.ncol; i++)
+    {
+      perm_in(i) = i;
     }
 
     BaskerSSWrapper<Int>::strong_component(M.ncol,
