@@ -153,9 +153,9 @@ namespace BaskerNS
             printf("\n restart factorization\n");
           }
           kokkos_nfactor_domain_remalloc <Int, Entry, Exe_Space>
-            diag_nfactor_remalloc(this, thread_start);
+            nfactor_dom_remalloc(this, thread_start);
           Kokkos::parallel_for(TeamPolicy(num_doms,nworker_threads),
-              diag_nfactor_remalloc);
+              nfactor_dom_remalloc);
           Kokkos::fence();
         }
       }//end while
@@ -286,9 +286,9 @@ namespace BaskerNS
 
       //======Call BTF factor====
       kokkos_nfactor_btf <Int, Entry, Exe_Space> 
-        diag_nfactor(this);
+        nfactor_btf(this);
       Kokkos::parallel_for(TeamPolicy(num_threads,1),
-        diag_nfactor);
+        nfactor_btf);
       Kokkos::fence();
 
       //=====Check for error======
@@ -333,9 +333,9 @@ namespace BaskerNS
             printf("\n restart factorization\n");
           }
           kokkos_nfactor_btf_remalloc <Int, Entry, Exe_Space>
-            diag_nfactor_remalloc(this, thread_start_top, thread_start);
+            nfactor_btf_remalloc(this, thread_start_top, thread_start);
           Kokkos::parallel_for(TeamPolicy(num_threads,1),
-            diag_nfactor_remalloc);
+            nfactor_btf_remalloc);
           Kokkos::fence();
           //printf( " nfactor_btf_remalloc done\n\n" );
         }
