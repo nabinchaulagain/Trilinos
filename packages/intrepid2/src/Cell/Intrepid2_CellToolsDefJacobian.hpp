@@ -58,7 +58,7 @@ namespace Intrepid2 {
       void operator()(const ordinal_type cell,
                       const ordinal_type point) const {
         
-        const ordinal_type dim = _jacobian.extent(2); // dim2 and dim3 should match
+        const ordinal_type phys_dim = _jacobian.extent(2); // dim2 and dim3 should match
         
         const ordinal_type gradRank = rank(_basisGrads);
         const ordinal_type ref_dim = _basisGrads.extent_int(gradRank-1);
@@ -66,7 +66,7 @@ namespace Intrepid2 {
         if ( gradRank == 3)
         {
           const ordinal_type cardinality = _basisGrads.extent(0);
-          for (ordinal_type i=0;i<dim;++i)
+          for (ordinal_type i=0;i<phys_dim;++i)
             for (ordinal_type j=0;j<ref_dim;++j) {
               _jacobian(cell, point, i, j) = 0;
               for (ordinal_type bf=0;bf<cardinality;++bf)
@@ -76,7 +76,7 @@ namespace Intrepid2 {
         else
         {
           const ordinal_type cardinality = _basisGrads.extent(1);
-          for (ordinal_type i=0;i<dim;++i)
+          for (ordinal_type i=0;i<phys_dim;++i)
           for (ordinal_type j=0;j<ref_dim;++j) {
             _jacobian(cell, point, i, j) = 0;
             for (ordinal_type bf=0;bf<cardinality;++bf)
