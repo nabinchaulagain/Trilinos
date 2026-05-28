@@ -800,11 +800,7 @@ namespace BaskerNS
             if(t < k)
             {
               U.row_idx(unnz) = t - L.srow;
-              #ifdef BASKER_2DL
               U.val(unnz) = X(j);
-              #else
-              U.val[unnz] = X[j];
-              #endif
 
               #ifdef BASKER_DEBUG_NFACTOR_BTF
               if (Options.verbose == BASKER_TRUE) {
@@ -815,11 +811,7 @@ namespace BaskerNS
             }
             else
             {
-              #ifdef BASKER_2DL
               lastU = X(j);
-              #else
-              lastU = X[j];
-              #endif
             }
           }
         }
@@ -828,11 +820,7 @@ namespace BaskerNS
           if (Options.prune || abs(X(j)) > rmin_*abs(pivot))
           {
             L.row_idx(lnnz) = j;
-            #ifdef BASKER_2DL
             L.val(lnnz) = X(j)/pivot;
-            #else
-            L.val[lnnz] = X[j]/pivot;
-            #endif
 
             #ifdef BASKER_DEBUG_NFACTOR_BTF
             if (Options.verbose == BASKER_TRUE) {
@@ -854,11 +842,7 @@ namespace BaskerNS
         }
         #endif
 
-        #ifdef BASKER_2DL
         X(j) = zero;
-        #else
-        X[j] = zero;
-        #endif
       }
       #ifdef BASKER_TIMER
       scale_time += timer_nfactor.seconds();
