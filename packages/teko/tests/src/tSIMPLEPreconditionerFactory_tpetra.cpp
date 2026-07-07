@@ -102,8 +102,6 @@ void tSIMPLEPreconditionerFactory_tpetra::initializeTest() {
       Tpetra::createCrsMatrix<ST, LO, GO, NT>(map, 2);
   const RCP<Tpetra::CrsMatrix<ST, LO, GO, NT> > ptrInvS =
       Tpetra::createCrsMatrix<ST, LO, GO, NT>(map, 2);
-  const RCP<Tpetra::CrsMatrix<ST, LO, GO, NT> > ptrInvMass =
-      Tpetra::createCrsMatrix<ST, LO, GO, NT>(map, 2);
 
   indices[0] = 0;
   indices[1] = 1;
