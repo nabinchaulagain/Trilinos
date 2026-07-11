@@ -55,6 +55,7 @@ bool success = true;
   using Teuchos::rcpFromRef;
 
   const ST one  = SCT::one();
+  const ST zero = SCT::zero();
 
 bool verbose = true;
 try {
@@ -98,7 +99,7 @@ try {
   X->MvInit( one );
   Teuchos::RCP<MV> B = Teuchos::rcp( new MV(numRows, numrhs) );
   OPT::Apply(*A,*X,*B);
-  X->MvInit(0.0);
+  X->MvInit( zero );
 
   //
   // ********Other information used by block solver***********
@@ -181,7 +182,7 @@ try {
   if (verbose) { std::cout << "First solve took " << numIters1 << " iterations." << std::endl; }
 
   // Resolve linear system with same rhs and recycled space
-  X->MvInit(0.0);
+  X->MvInit( zero );
   newSolver->reset(Belos::Problem);
   ret = newSolver->solve();
   int numIters2 = newSolver->getNumIters();
@@ -189,7 +190,7 @@ try {
   if (verbose) { std::cout << "Second solve took " << numIters2 << " iterations." << std::endl; }
 
   // Resolve linear system (again) with same rhs and recycled space
-  X->MvInit(0.0);
+  X->MvInit( zero );
   newSolver->reset(Belos::Problem);
   ret = newSolver->solve();
   int numIters3 = newSolver->getNumIters();
