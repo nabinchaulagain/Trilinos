@@ -699,7 +699,7 @@ ReturnType GmresPolySolMgr<ScalarType,MV,OP>::solve ()
     // Apply the polynomial to the current linear system
     poly_Op_->ApplyPoly( *problem_->getRHS(), *problem_->getLHS() );
     achievedTol_ = MTS::one();
-
+    
   }
 
   return ret;
