@@ -962,11 +962,7 @@ TensorBase<T, ST>::fill(T const & s)
 
   for (Index i = 0; i < number_components; ++i) {
     auto & entry = (*this)[i];
-#if KOKKOS_VERSION >= 40799
-    fill_AD<T>(entry, KokkosKernels::ArithTraits<S>::zero());
-#else
-    fill_AD<T>(entry, Kokkos::ArithTraits<S>::zero());
-#endif
+    fill_AD<T>(entry, S(0));
     entry = s;
   }
 
