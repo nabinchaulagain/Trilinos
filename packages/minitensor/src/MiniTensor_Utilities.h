@@ -219,11 +219,6 @@ levi_civita(Index const i, Index const j, Index const k, Index const l);
 #include <cmath>
 #include <cstdlib>
 #include <limits>
-#if KOKKOS_VERSION >= 40799
-#include "KokkosKernels_ArithTraits.hpp"
-#else
-#include "Kokkos_ArithTraits.hpp"
-#endif
 
 namespace minitensor {
 
