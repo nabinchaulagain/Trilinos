@@ -219,11 +219,6 @@ levi_civita(Index const i, Index const j, Index const k, Index const l);
 #include <cmath>
 #include <cstdlib>
 #include <limits>
-#if KOKKOS_VERSION >= 40799
-#include "KokkosKernels_ArithTraits.hpp"
-#else
-#include "Kokkos_ArithTraits.hpp"
-#endif
 
 namespace minitensor {
 
@@ -325,11 +320,7 @@ typename Sacado::ScalarType<T>::type
 machine_epsilon()
 {
   using S = typename Sacado::ScalarType<T>::type;
-#if KOKKOS_VERSION >= 40799
-  return KokkosKernels::ArithTraits<S>::epsilon();
-#else
-  return Kokkos::ArithTraits<S>::epsilon();
-#endif
+  return std::numeric_limits<S>::epsilon();
 }
 
 //
