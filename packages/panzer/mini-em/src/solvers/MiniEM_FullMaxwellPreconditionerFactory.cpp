@@ -387,8 +387,8 @@ void FullMaxwellPreconditionerFactory::initializeFromParameterList(const Teuchos
 
   // Q_B solve
   if (pl.isParameter("Q_B Solve")) {
-    Teuchos::ParameterList cg_pl = pl.sublist("Q_B Solve");
-    invLib.addInverse("Q_B Solve",cg_pl);
+    Teuchos::ParameterList Q_B_solve_pl = pl.sublist("Q_B Solve");
+    invLib.addInverse("Q_B Solve",Q_B_solve_pl);
   }
 
   // Q_B preconditioner
