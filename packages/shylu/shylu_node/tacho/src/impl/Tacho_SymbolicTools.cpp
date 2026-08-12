@@ -241,11 +241,11 @@ void SymbolicTools::computeSupernodes(const ordinal_type m, const size_type_arra
     flag(k) = true; // supernodes begin
 
     ordinal_type supernode_size = 0;
-    ordinal_type supernode_size_threshold = m; // max supernode threshold (todo: not used, but could pass in as arg)
+    ordinal_type supernode_max_size_threshold = m; // max supernode threshold (todo: not used, but could pass in as arg)
     for (ordinal_type i = 0; i < m; ++i)
     {
       supernode_size ++;
-      if (flag(i) || supernode_size >= supernode_size_threshold) {
+      if (flag(i) || supernode_size >= supernode_max_size_threshold) {
         supernode_size = 0;
         k ++;
       }
@@ -259,7 +259,7 @@ void SymbolicTools::computeSupernodes(const ordinal_type m, const size_type_arra
     supernode_size = 0;
     for (ordinal_type i = 0; i < m; ++i) {
       supernode_size ++;
-      if (flag(i) || supernode_size >= supernode_size_threshold) {
+      if (flag(i) || supernode_size >= supernode_max_size_threshold) {
         supernode_size = 0;
         supernodes(k++) = i;
       }
