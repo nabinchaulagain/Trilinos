@@ -217,26 +217,40 @@ template <typename T> struct BlasTeam {
 
       const bool use_unit_diag = diag == 'U' || diag == 'u';
       T *KOKKOS_RESTRICT b0 = b;
-      for (int p = (m - 1); p >= 0; --p) {
-        const int iend = p;
+      if (use_unit_diag) {
+        for (int p = (m - 1); p >= 0; --p) {
+          const int iend = p;
 
-        const T *KOKKOS_RESTRICT a01 = A + p * as1;
-        /**/  T *KOKKOS_RESTRICT beta1 = b + p * bs0;
+          const T *KOKKOS_RESTRICT a01 = A + p * as1;
+          /**/  T *KOKKOS_RESTRICT beta1 = b + p * bs0;
 
-        /// make sure the previous iteration update is done
-        member.team_barrier();
-        T local_beta1 = *beta1;
-        if (!use_unit_diag) {
+          /// make sure the previous iteration update is done
+          member.team_barrier();
+          T local_beta1 = *beta1;
+          Kokkos::parallel_for(Kokkos::TeamVectorRange(member, iend),
+                               [&](const int &i) { b0[i * bs0] -= cjA(a01[i * as0]) * local_beta1; });
+        }
+      } else {
+        for (int p = (m - 1); p >= 0; --p) {
+          const int iend = p;
+
+          const T *KOKKOS_RESTRICT a01 = A + p * as1;
+          /**/  T *KOKKOS_RESTRICT beta1 = b + p * bs0;
+
+          /// make sure the previous iteration update is done
+          member.team_barrier();
+          T local_beta1 = *beta1;
           const T alpha11 = cjA(A[p * as0 + p * as1]);
           local_beta1 /= alpha11;
           /// before modifying beta1 we need make sure
           /// that every local_beta1 has the previous beta1 value
           member.team_barrier();
           Kokkos::single(Kokkos::PerTeam(member), [&]() { *beta1 = local_beta1; });
+
+          // update remaining vector entries
+          Kokkos::parallel_for(Kokkos::TeamVectorRange(member, iend),
+                               [&](const int &i) { b0[i * bs0] -= cjA(a01[i * as0]) * local_beta1; });
         }
-        // update remaining vector entries
-        Kokkos::parallel_for(Kokkos::TeamVectorRange(member, iend),
-                             [&](const int &i) { b0[i * bs0] -= cjA(a01[i * as0]) * local_beta1; });
       }
     }
 
