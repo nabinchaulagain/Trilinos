@@ -93,7 +93,10 @@ template <> struct LU<Algo::External> {
           /// apply pivots to perm vector
           if (fpiv[i]) {
             const ordinal_type pidx = i + fpiv[i];
-            swap(perm[i], perm[pidx]);
+            //swap(perm[i], perm[pidx]); // unknown issues with factorize_small_host
+            ordinal_type pi = perm[i];
+            perm[i] = perm[pidx];
+            perm[pidx] = pi;
           }
         }
         for (ordinal_type i = 0; i < m; ++i)
