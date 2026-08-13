@@ -137,7 +137,6 @@ private:
 
   // 0: device level function, 1: team policy, 2: team policy recursive
   ordinal_type _device_factorize_thres, _device_solve_thres;
-  ordinal_type _team_serial_level_cut;
 
   ordinal_type _num_fact_calls;
   ordinal_type_array_host _h_factorize_mode, _h_solve_mode;
@@ -605,7 +604,6 @@ public:
     _h_num_device_calls_solve = ordinal_type_array_host(do_not_initialize_tag("h_num_device_calls_solve"), _nlevel);
     _h_num_team_calls_solve = ordinal_type_array_host(do_not_initialize_tag("h_num_team_calls_solve"), _nlevel);
 
-    _team_serial_level_cut = _nlevel;
     for (ordinal_type lvl = 0; lvl < _nlevel; ++lvl) {
       _h_num_device_calls_solve(lvl) = 0;
       _h_num_team_calls_solve(lvl) = 0;
@@ -4677,7 +4675,7 @@ public:
 
         //  1. L w = t
         {
-          for (ordinal_type lvl = (_team_serial_level_cut - 1); lvl >= 0; --lvl) {
+          for (ordinal_type lvl = (_nlevel - 1); lvl >= 0; --lvl) {
             const ordinal_type pbeg = _h_level_ptr(lvl), pend = _h_level_ptr(lvl + 1), pcnt = pend - pbeg;
             const range_type range_solve_buf_ptr(_h_buf_level_ptr(lvl), _h_buf_level_ptr(lvl + 1));
 
@@ -4706,7 +4704,7 @@ public:
               ++stat_level.n_kernel_launching;
             }
             const auto h_buf_solve_ptr = Kokkos::subview(_h_buf_solve_nrhs_ptr, range_solve_buf_ptr);
-            solveLU_LowerOnDevice(lvl, _team_serial_level_cut, pbeg, pend, h_buf_solve_ptr, t);
+            solveLU_LowerOnDevice(lvl, _nlevel, pbeg, pend, h_buf_solve_ptr, t);
             if (variant != 3) {
               if (need_fence && _h_num_device_calls_solve(lvl) > 0)
                 Kokkos::fence(); // synch solve device before update
@@ -4742,7 +4740,7 @@ public:
 
         //  2. U t = w;
         {
-          for (ordinal_type lvl = 0; lvl < _team_serial_level_cut; ++lvl) {
+          for (ordinal_type lvl = 0; lvl < _nlevel; ++lvl) {
             const ordinal_type pbeg = _h_level_ptr(lvl), pend = _h_level_ptr(lvl + 1), pcnt = pend - pbeg;
 
             const range_type range_solve_buf_ptr(_h_buf_level_ptr(lvl), _h_buf_level_ptr(lvl + 1));
@@ -4776,11 +4774,11 @@ public:
               ++stat_level.n_kernel_launching;
             }
             const auto h_buf_solve_ptr = Kokkos::subview(_h_buf_solve_nrhs_ptr, range_solve_buf_ptr);
-            solveLU_UpperOnDevice(lvl, _team_serial_level_cut, pbeg, pend, h_buf_solve_ptr, t);
+            solveLU_UpperOnDevice(lvl, _nlevel, pbeg, pend, h_buf_solve_ptr, t);
             if (variant != 3) {
               if (need_fence && _h_num_device_calls_solve(lvl) > 0)
                 Kokkos::fence(); // synch solve on device before the next update on default
-              //else if (lvl == _team_serial_level_cut-1 || _h_num_device_calls_solve(lvl+1) > 0)
+              //else if (lvl == _nlevel-1 || _h_num_device_calls_solve(lvl+1) > 0)
               //  exec_space().fence(); // synch bached solve-upper calls
             }
           }
