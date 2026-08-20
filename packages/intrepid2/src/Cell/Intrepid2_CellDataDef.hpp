@@ -899,8 +899,8 @@ refCenterDataStatic_ = {
   distance(const PointViewType &point) {
     using scalar_type = typename ScalarTraits<typename PointViewType::value_type>::scalar_type;
     constexpr scalar_type one(1), two(2), three(3);
-    const scalar_type& p0 = get_scalar_value(point(0));
-    const scalar_type& p1 = get_scalar_value(point(1));
+    const scalar_type p0 = get_scalar_value(point(0));
+    const scalar_type p1 = get_scalar_value(point(1));
     return Util<scalar_type>::max(one-three*p0, three*(p0+p1)-two, one-three*p1); 
   }
 
