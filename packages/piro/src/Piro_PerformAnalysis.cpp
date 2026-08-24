@@ -472,13 +472,13 @@ Piro::PerformROLSteadyAnalysis(
 
   bool useCustomDotProduct = false;
   bool lumpHessianMatrix = false;
-  int reponse_index_dotProd = -1;
+  int response_index_dotProd = -1;
   if(rolParams.isSublist("Matrix Based Dot Product")) {
     const Teuchos::ParameterList& matrixDotProductList = rolParams.sublist("Matrix Based Dot Product");
     auto matrixType = matrixDotProductList.get<std::string>("Matrix Type");
     if(matrixType == "Hessian Of Response") {
       useCustomDotProduct = true;
-      reponse_index_dotProd = matrixDotProductList.sublist("Matrix Types").sublist("Hessian Of Response").get<int>("Response Index");
+      response_index_dotProd = matrixDotProductList.sublist("Matrix Types").sublist("Hessian Of Response").get<int>("Response Index");
       lumpHessianMatrix = matrixDotProductList.sublist("Matrix Types").sublist("Hessian Of Response").get<bool>("Lump Matrix");
     }
     else if (matrixType == "Identity")
@@ -494,7 +494,7 @@ Piro::PerformROLSteadyAnalysis(
   bool useCustomSecant = false;
   int secantMaxStorage = -1;
   double secantScaling(1.0);
-  int reponse_index_secant = -1;
+  int response_index_secant = -1;
   if(rolParams.isSublist("Custom Secant")) {
     Teuchos::ParameterList customSecantList = rolParams.sublist("Custom Secant");
     secantMaxStorage = customSecantList.get<int>("Maximum Storage");
@@ -510,10 +510,10 @@ Piro::PerformROLSteadyAnalysis(
     auto initializationType = customSecantList.get<std::string>("Initialization Type");
 
     if(initializationType == "Hessian Of Response") {
-      reponse_index_secant = customSecantList.sublist("Initialization Types").sublist("Hessian Of Response").get<int>("Response Index");
+      response_index_secant = customSecantList.sublist("Initialization Types").sublist("Hessian Of Response").get<int>("Response Index");
     }
     else if(initializationType == "Identity") {
-      reponse_index_secant = -1;
+      response_index_secant = -1;
     }
     else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -539,15 +539,15 @@ Piro::PerformROLSteadyAnalysis(
 
     if (useCustomDotProduct && !model_PME.is_null()) {
       bH_dotP = Teko::createBlockedOp();
-      model_PME->block_diagonal_hessian_22(bH_dotP, *rol_x_ptr, *rol_p_ptr, reponse_index_dotProd);
+      model_PME->block_diagonal_hessian_22(bH_dotP, *rol_x_ptr, *rol_p_ptr, response_index_dotProd);
     }
-    if(useCustomSecant && (reponse_index_secant != -1 ) && !model_PME.is_null()) {
+    if(useCustomSecant && (response_index_secant != -1 ) && !model_PME.is_null()) {
 
-      if (reponse_index_dotProd == reponse_index_secant)
+      if (response_index_dotProd == response_index_secant)
         bH_sec = bH_dotP;
       else {
         bH_sec = Teko::createBlockedOp();
-        model_PME->block_diagonal_hessian_22(bH_sec, *rol_x_ptr, *rol_p_ptr, reponse_index_secant);
+        model_PME->block_diagonal_hessian_22(bH_sec, *rol_x_ptr, *rol_p_ptr, response_index_secant);
       }
     }
     
@@ -577,9 +577,9 @@ Piro::PerformROLSteadyAnalysis(
     }
 
     if(useCustomSecant) {
-      if(reponse_index_secant == -1 ) {// identity initialization 
+      if(response_index_secant == -1 ) {// identity initialization 
         invH_sec = H_sec = Teuchos::rcp(new Thyra::DefaultIdentityLinearOp<double>(p_space));
-      } else if ((reponse_index_dotProd == reponse_index_secant) && Teuchos::nonnull(H_dotP) && Teuchos::nonnull(invH_dotP)) {
+      } else if ((response_index_dotProd == response_index_secant) && Teuchos::nonnull(H_dotP) && Teuchos::nonnull(invH_dotP)) {
         H_sec = H_dotP;
         invH_sec = invH_dotP;
       } else {
@@ -597,8 +597,8 @@ Piro::PerformROLSteadyAnalysis(
   }
 
 #else
-  (void)reponse_index_dotProd;
-  (void)reponse_index_secant;
+  (void)response_index_dotProd;
+  (void)response_index_secant;
   TEUCHOS_TEST_FOR_EXCEPTION(useCustomDotProduct||useCustomSecant, Teuchos::Exceptions::InvalidParameter,
       std::endl << "Piro::PerformROLSteadyAnalysis, ERROR: " <<
       "Teko is required for computing custom dot product or secant"<<std::endl);
