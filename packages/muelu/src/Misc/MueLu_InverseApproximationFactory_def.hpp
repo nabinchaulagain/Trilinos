@@ -252,9 +252,8 @@ class LocalSPAIFunctor {
         auto v = rowA.value(jj);
 
         // do binary search to find column in uniqueColIndices
-        auto it              = std::lower_bound(Kokkos::Experimental::begin(uniqueColIndicies), Kokkos::Experimental::end(uniqueColIndicies), j);
-        ptrdiff_t newIndex   = it - Kokkos::Experimental::begin(uniqueColIndicies);
-        localA(newIndex, ii) = v;
+        auto it        = KokkosKernels::lower_bound_thread(uniqueColIndicies, j);
+        localA(it, ii) = v;
       }
     }
 
