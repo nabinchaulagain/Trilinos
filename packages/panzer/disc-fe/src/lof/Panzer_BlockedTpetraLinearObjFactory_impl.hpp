@@ -691,23 +691,8 @@ getGhostedThyraMatrix() const
       for(std::size_t j=0;j<blockDim;j++) {
          if(excludedPairs_.find(std::make_pair(i,j))==excludedPairs_.end()) {
             // build (i,j) block matrix and add it to blocked operator
-            //
-            // See getThyraMatrix(): in FE mode the spaces are stated explicitly, since the
-            // shared matrix's own maps follow its active view. This ghosted operator keeps
-            // the ghosted spaces, matching the ghosted container's vectors and the classic
-            // path, even though the matrix underneath is the same object the owned operator
-            // wraps.
-            Teuchos::RCP<Thyra::LinearOpBase<ScalarT> > block;
-            if(useFEAssembly_) {
-               Teuchos::RCP<const Thyra::ProductVectorSpaceBase<ScalarT> > gRange
-                  = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorSpaceBase<ScalarT> >(getGhostedThyraRangeSpace(),true);
-               Teuchos::RCP<const Thyra::ProductVectorSpaceBase<ScalarT> > gDomain
-                  = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorSpaceBase<ScalarT> >(getGhostedThyraDomainSpace(),true);
-               block = Thyra::tpetraLinearOp<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(
-                          gRange->getBlock(i),gDomain->getBlock(j),getGhostedTpetraMatrix(i,j));
-            }
-            else
-               block = Thyra::createLinearOp<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(getGhostedTpetraMatrix(i,j));
+            Teuchos::RCP<Thyra::LinearOpBase<ScalarT> > block
+               = Thyra::createLinearOp<ScalarT,LocalOrdinalT,GlobalOrdinalT,NodeT>(getGhostedTpetraMatrix(i,j));
             blockedOp->setNonconstBlock(i,j,block);
          }
       }
