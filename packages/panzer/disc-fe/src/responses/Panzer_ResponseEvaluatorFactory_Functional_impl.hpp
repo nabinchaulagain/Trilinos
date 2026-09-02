@@ -80,10 +80,7 @@ buildAndRegisterEvaluators(const std::string & responseName,
           scatterObj = Teuchos::rcp(new FunctionalScatter<LO,GO>(nc2c_vector(bugi->getFieldDOFManagers())));
         }
         else if(ugi!=Teuchos::null) { // this needs to be second since a BlockedDOFManager is a child of GlobalIndexer
-          std::vector<Teuchos::RCP<const GlobalIndexer> > ugis; 
-          ugis.push_back(ugi);
-
-          scatterObj = Teuchos::rcp(new FunctionalScatter<LO,GO>(ugis));
+          scatterObj = Teuchos::rcp(new FunctionalScatter<LO,GO>(ugi));
         }
         else {
           TEUCHOS_ASSERT(false); // no real global indexer to use
