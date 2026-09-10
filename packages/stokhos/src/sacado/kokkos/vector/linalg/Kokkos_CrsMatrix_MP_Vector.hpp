@@ -498,12 +498,8 @@ public:
 namespace KokkosSparse {
 
 template <
-#if KOKKOSKERNELS_VERSION >= 40199
           typename ExecutionSpace,
-#endif
-#if KOKKOSKERNELS_VERSION >= 40299
           typename Handle,
-#endif
           typename AlphaType,
           typename BetaType,
           typename MatrixType,
@@ -514,29 +510,18 @@ template <
 typename std::enable_if<
   Kokkos::is_view_mp_vector< Kokkos::View< InputType, InputP... > >::value &&
   Kokkos::is_view_mp_vector< Kokkos::View< OutputType, OutputP... > >::value
-#if KOKKOSKERNELS_VERSION >= 40299
   && KokkosSparse::is_crs_matrix_v<MatrixType>
   && (Kokkos::View< OutputType, OutputP... >::rank() == 1)
-#endif
   >::type
 spmv(
-#if KOKKOSKERNELS_VERSION >= 40199
   const ExecutionSpace& space,
-#endif
-#if KOKKOSKERNELS_VERSION < 40299
-  KokkosKernels::Experimental::Controls,
-#else
   Handle* handle,
-#endif
   const char mode[],
   const AlphaType& a,
   const MatrixType& A,
   const Kokkos::View< InputType, InputP... >& x,
   const BetaType& b,
   const Kokkos::View< OutputType, OutputP... >& y
-#if KOKKOSKERNELS_VERSION < 40299
-  , const RANK_ONE
-#endif
 )
 {
   typedef Kokkos::View< OutputType, OutputP... > OutputVectorType;
@@ -548,12 +533,10 @@ spmv(
   typedef std::remove_const_t<typename InputVectorType::element_type::value_type> value_type;
 #endif
 
-#if KOKKOSKERNELS_VERSION >= 40199
   if(space != ExecutionSpace()) {
     Kokkos::Impl::raise_error(
       "Stokhos spmv not implemented for non-default execution space instance");
   }
-#endif
   if(mode[0]!='N') {
     Kokkos::Impl::raise_error(
       "Stokhos spmv not implemented for transposed or conjugated matrix-vector multiplies");
