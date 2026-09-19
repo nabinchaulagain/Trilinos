@@ -212,9 +212,7 @@ UtilitiesBase<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
     using execution_space  = typename Node::execution_space;
     using rowmap_type      = typename local_graph_type::row_map_type::non_const_type;
     using entries_type     = typename local_graph_type::entries_type::non_const_type;
-    using range_type       = Kokkos::RangePolicy<execution_space, LocalOrdinal>;
     using implATS          = KokkosKernels::ArithTraits<typename matrix_type::impl_scalar_type>;
-    using magATS           = KokkosKernels::ArithTraits<typename implATS::magnitudeType>;
     auto lclA              = A->getLocalMatrixDevice();
     auto lclRowmap         = A->getRowMap()->getLocalMap();
     auto lclColmap         = A->getColMap()->getLocalMap();
