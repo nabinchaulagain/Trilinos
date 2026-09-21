@@ -1283,9 +1283,6 @@ TEUCHOS_UNIT_TEST_TEMPLATE_4_DECL(CoalesceDropFactory_kokkos, StrongWeakSymmetry
 // Test strong/weak pattern symmetry options.
 #include <MueLu_UseShortNames.hpp>
 
-  typedef Teuchos::ScalarTraits<SC> STS;
-  typedef typename STS::magnitudeType real_type;
-  typedef Xpetra::MultiVector<real_type, LO, GO, NO> RealValuedMultiVector;
   using local_ordinal_type = LO;
   using ATS                = KokkosKernels::ArithTraits<SC>;
   using impl_scalar_type   = typename ATS::val_type;
