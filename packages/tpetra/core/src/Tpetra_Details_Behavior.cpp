@@ -14,6 +14,7 @@
 #include <cstdlib> // std::getenv
 #include <functional>
 #include <map>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -244,17 +245,15 @@ namespace { // (anonymous)
 
   bool
   idempotentlyGetNamedEnvironmentVariableAsBool (const char name[],
-                                                 bool& initialized,
+                                                 std::once_flag& onceFlag,
                                                  const char environmentVariableName[],
                                                  const bool defaultValue)
   {
     using BehaviorDetails::namedVariableMap_;
-    if (! initialized) {
-      setEnvironmentVariableMap (environmentVariableName,
-                                 namedVariableMap_,
-                                 defaultValue);
-      initialized = true;
-    }
+    std::call_once(onceFlag, setEnvironmentVariableMap,
+                   environmentVariableName,
+                   std::ref(namedVariableMap_),
+                   defaultValue);
     auto thisEnvironmentVariableMap = namedVariableMap_[environmentVariableName];
     auto thisEnvironmentVariable = thisEnvironmentVariableMap.find(name);
     if (thisEnvironmentVariable != thisEnvironmentVariableMap.end())
@@ -595,9 +594,9 @@ bool Behavior::profilingRegionUseKokkosProfiling() {
 bool Behavior::debug(const char name[]) {
   constexpr bool defaultValue = false;
 
-  static bool initialized_ = false;
+  static std::once_flag onceFlag;
   return idempotentlyGetNamedEnvironmentVariableAsBool(
-      name, initialized_, BehaviorDetails::DEBUG.data(), defaultValue);
+      name, onceFlag, BehaviorDetails::DEBUG.data(), defaultValue);
 }
 
 bool Behavior::verbose(const char name[]) {
@@ -606,9 +605,9 @@ bool Behavior::verbose(const char name[]) {
 
   constexpr bool defaultValue = false;
 
-  static bool initialized_ = false;
+  static std::once_flag onceFlag;
   return idempotentlyGetNamedEnvironmentVariableAsBool(
-      name, initialized_, BehaviorDetails::VERBOSE.data(), defaultValue);
+      name, onceFlag, BehaviorDetails::VERBOSE.data(), defaultValue);
 }
 
 void Behavior::enable_verbose_behavior() {
@@ -625,9 +624,9 @@ bool Behavior::timing(const char name[]) {
 
   constexpr bool defaultValue = false;
 
-  static bool initialized_ = false;
+  static std::once_flag onceFlag;
   return idempotentlyGetNamedEnvironmentVariableAsBool(
-      name, initialized_, BehaviorDetails::TIMING.data(), defaultValue);
+      name, onceFlag, BehaviorDetails::TIMING.data(), defaultValue);
 }
 
 void Behavior::enable_timing() { BehaviorDetails::timingDisabled_ = false; }
