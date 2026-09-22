@@ -1185,7 +1185,7 @@ void UtilitiesBase<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
                             Xpetra::MultiVector<Scalar, LocalOrdinal, GlobalOrdinal, Node>& InitialGuess,
                             const typename Teuchos::ScalarTraits<SC>::magnitudeType& tol,
                             const bool count_twos_as_dirichlet) {
-  using range_type = Kokkos::RangePolicy<LO, typename Node::execution_space>;
+  using md_range_type = Kokkos::MDRangePolicy<LO, typename Node::execution_space, Kokkos::Rank<2>>;
 
   auto dirichletRows = DetectDirichletRows_kokkos(A, tol, count_twos_as_dirichlet);
 
@@ -1200,11 +1200,10 @@ void UtilitiesBase<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
   auto lclInitialGuess = InitialGuess.getLocalViewDevice(Xpetra::Access::ReadWrite);
 
   Kokkos::parallel_for(
-      "MueLu:Utils::EnforceInitialCondition", range_type(0, numRows),
-      KOKKOS_LAMBDA(const LO row) {
+      "MueLu:Utils::EnforceInitialCondition", md_range_type({0, 0}, {numRows, numVectors}),
+      KOKKOS_LAMBDA(const LO row, const LO vec) {
         if (dirichletRows(row)) {
-          for (LocalOrdinal j = 0; j < numVectors; ++j)
-            lclInitialGuess(row, j) = lclRHS(row, j);
+          lclInitialGuess(row, vec) = lclRHS(row, vec);
         }
       });
 }
