@@ -399,12 +399,13 @@ rank_one_right(T const & beta, Vector<T, N> const & v, Tensor<T, N> & A)
 }
 
 // Auxiliary functions for precondioners.
-namespace impl {
+namespace {
 
 //
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> identity_precon(Tensor<T, N> const &A,
                                              RHS const &B) {
   return std::make_pair(A, B);
@@ -414,6 +415,7 @@ std::pair<Tensor<T, N>, RHS> identity_precon(Tensor<T, N> const &A,
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> diagonal_precon(Tensor<T, N> const &A,
                                              RHS const &B) {
   Vector<T, N> const
@@ -432,6 +434,7 @@ std::pair<Tensor<T, N>, RHS> diagonal_precon(Tensor<T, N> const &A,
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> maxabsrow_precon(Tensor<T, N> const &A, RHS &B) {
   Index const
   dimension = A.get_dimension();
@@ -446,7 +449,7 @@ std::pair<Tensor<T, N>, RHS> maxabsrow_precon(Tensor<T, N> const &A, RHS &B) {
   return std::make_pair(P * A, P * B);
 }
 
-} // namespace impl
+} // anonymous namespace
 
 //
 //
@@ -463,10 +466,10 @@ std::pair<Tensor<T, N>, RHS> precon(PreconditionerType const pt,
     break;
 
   case PreconditionerType::DIAGONAL:
-    return impl::diagonal_precon(A, B);
+    return diagonal_precon(A, B);
 
   case PreconditionerType::MAX_ABS_ROW:
-    return impl::maxabsrow_precon(A, B);
+    return maxabsrow_precon(A, B);
   }
 
   return std::make_pair(A, B);
