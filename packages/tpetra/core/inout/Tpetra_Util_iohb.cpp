@@ -231,7 +231,7 @@ char* substr(const char* S, const int pos, const int len);
 void upcase(char* S);
 void IOHBTerminate(const char* message);
 
-int readHB_info(const char* filename, int* M, int* N, int* nz, std::string& Type,
+int readHB_info(const char* filename, int* M, int* N, int* nz, char** Type,
                 int* Nrhs) {
   /****************************************************************************/
   /*  The readHB_info function opens and reads the header information from    */
@@ -253,12 +253,16 @@ int readHB_info(const char* filename, int* M, int* N, int* nz, std::string& Type
   std::FILE* in_file;
   int Ptrcrd, Indcrd, Valcrd, Rhscrd;
   int Nrow, Ncol, Nnzero;
-  char mat_type[4];
+  char* mat_type;
   char Title[73], Key[9], Rhstype[4];
   char Ptrfmt[17], Indfmt[17], Valfmt[21], Rhsfmt[21];
 
+  mat_type = (char*)malloc(4);
+  if (mat_type == NULL) IOHBTerminate("Insufficient memory for mat_type\n");
+
   if ((in_file = std::fopen(filename, "r")) == NULL) {
     std::fprintf(stderr, "Error: Cannot open file: %s\n", filename);
+    free(mat_type);
     return 0;
   }
 
@@ -266,10 +270,11 @@ int readHB_info(const char* filename, int* M, int* N, int* nz, std::string& Type
                 Ptrfmt, Indfmt, Valfmt, Rhsfmt,
                 &Ptrcrd, &Indcrd, &Valcrd, &Rhscrd, Rhstype);
   std::fclose(in_file);
-  Type = std::string(mat_type, 3);
-  *M   = Nrow;
-  *N   = Ncol;
-  *nz  = Nnzero;
+  *Type        = mat_type;
+  *(*Type + 3) = '\0';
+  *M           = Nrow;
+  *N           = Ncol;
+  *nz          = Nnzero;
   if (Rhscrd == 0) {
     *Nrhs = 0;
   }
@@ -535,9 +540,9 @@ int readHB_mat_double(const char* filename, int colptr[], int rowind[],
 int readHB_newmat_double(const char* filename, int* M, int* N, int* nonzeros,
                          int** colptr, int** rowind, double** val) {
   int Nrhs;
-  std::string Type;
+  char* Type;
 
-  if (readHB_info(filename, M, N, nonzeros, Type, &Nrhs) == 0) {
+  if (readHB_info(filename, M, N, nonzeros, &Type, &Nrhs) == 0) {
     return 0;
   }
 
@@ -556,6 +561,7 @@ int readHB_newmat_double(const char* filename, int* M, int* N, int* nonzeros,
       if (*val == NULL) IOHBTerminate("Insufficient memory for val.\n");
     }
   } /* No val[] space needed if pattern only */
+  free(Type);
   return readHB_mat_double(filename, *colptr, *rowind, *val);
 }
 
@@ -742,11 +748,12 @@ int readHB_newaux_double(const char* filename, const char AuxType, double** b) {
   int M        = 0;
   int N        = 0;
   int nonzeros = 0;
-  std::string Type;
+  char* Type   = NULL;
 
-  readHB_info(filename, &M, &N, &nonzeros, Type, &Nrhs);
+  readHB_info(filename, &M, &N, &nonzeros, &Type, &Nrhs);
   if (Nrhs <= 0) {
     std::fprintf(stderr, "Warn: Requested read of aux vector(s) when none are present.\n");
+    free(Type);
     return 0;
   } else {
     if (Type[0] == 'C') {
@@ -754,11 +761,15 @@ int readHB_newaux_double(const char* filename, const char AuxType, double** b) {
       std::fprintf(stderr, "         Real and imaginary parts will be interlaced in b[].");
       *b = (double*)malloc(M * Nrhs * sizeof(double) * 2);
       if (*b == NULL) IOHBTerminate("Insufficient memory for rhs.\n");
-      return readHB_aux_double(filename, AuxType, *b);
+      int result = readHB_aux_double(filename, AuxType, *b);
+      free(Type);
+      return result;
     } else {
       *b = (double*)malloc(M * Nrhs * sizeof(double));
       if (*b == NULL) IOHBTerminate("Insufficient memory for rhs.\n");
-      return readHB_aux_double(filename, AuxType, *b);
+      int result = readHB_aux_double(filename, AuxType, *b);
+      free(Type);
+      return result;
     }
   }
 }
