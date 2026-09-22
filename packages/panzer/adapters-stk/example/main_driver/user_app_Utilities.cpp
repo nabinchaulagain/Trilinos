@@ -62,6 +62,7 @@
 #include <string>
 #include <iostream>
 #include <tuple>
+#include <type_traits>
 
 #include "user_app_Utilities.hpp"
 
@@ -259,51 +260,52 @@ user_app::buildTimeIntegrator(const Teuchos::RCP<Teuchos::ParameterList>& input_
   return integrator;
 }
 
+namespace {
+  template<typename NameGetter, typename CountGetter>
+  std::tuple<int,int> findIndexByName(const std::string& name,
+                                       const Thyra::ModelEvaluator<double>& me,
+                                       CountGetter get_count,
+                                       NameGetter get_names,
+                                       const std::string& type_label)
+  {
+    bool found = false;
+    int index = -1;
+    int sub_index = -1;
+    for (int i = 0; i < get_count(me); ++i) {
+      auto names = get_names(me, i);
+      using NamesType = decltype(names);
+      constexpr bool is_pointer = std::is_pointer_v<NamesType>;
+      const auto& names_ref = is_pointer ? *names : names;
+      for (Teuchos::Ordinal sub=0; sub < names_ref.size(); ++sub) {
+        if (names_ref[sub] == name) {
+          found = true;
+          index = i;
+          sub_index = sub;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!found,std::runtime_error,
+      "ERROR: the " << type_label << " \"" << name << "\" is not a valid " << type_label << " name in the model evaluator!");
+
+    return {index,sub_index};
+  }
+}
+
 std::tuple<int,int> user_app::findParameterIndex(const std::string& p_name,const Thyra::ModelEvaluator<double>& me)
 {
-  bool found = false;
-  int index = -1;
-  int sub_index = -1;
-  for (int p = 0; p < me.Np(); ++p) {
-    auto p_names = me.get_p_names(p);
-    for (Teuchos::Ordinal p_sub=0; p_sub < p_names->size(); ++p_sub) {
-      if ((*p_names)[p_sub] == p_name) {
-        found = true;
-        index = p;
-        sub_index = p_sub;
-        break;
-      }
-    }
-    if (found) break;
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(!found,std::runtime_error,
-    "ERROR: the parameter \"" << p_name << "\" is not a valid parameter name in the model evaluator!");
-
-  return {index,sub_index};
+  return findIndexByName(p_name, me,
+                         [](const Thyra::ModelEvaluator<double>& m){ return m.Np(); },
+                         [](const Thyra::ModelEvaluator<double>& m, int i){ return m.get_p_names(i); },
+                         "parameter");
 }
 
 std::tuple<int,int> user_app::findResponseIndex(const std::string& g_name,const Thyra::ModelEvaluator<double>& me)
 {
-  bool found = false;
-  int index = -1;
-  int sub_index = -1;
-  for (int g = 0; g < me.Ng(); ++g) {
-    auto g_names = me.get_g_names(g);
-    for (Teuchos::Ordinal g_sub=0; g_sub < g_names.size(); ++g_sub) {
-      std::cout << "g(" << g << "," << g_sub << ")=" << g_names[g_sub] << std::endl;
-      if (g_names[g_sub] == g_name) {
-        found = true;
-        index = g;
-        sub_index = g_sub;
-        break;
-      }
-    }
-    if (found) break;
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(!found,std::runtime_error,
-    "ERROR: the response \"" << g_name << "\" is not a valid response name in the model evaluator!");
-  
-  return {index,sub_index};
+  return findIndexByName(g_name, me,
+                         [](const Thyra::ModelEvaluator<double>& m){ return m.Ng(); },
+                         [](const Thyra::ModelEvaluator<double>& m, int i){ return m.get_g_names(i); },
+                         "response");
 }
