@@ -48,9 +48,11 @@ RepartitionUtilities<Scalar, LocalOrdinal, GlobalOrdinal, Node>::ConstructGIDs(R
   if (decomposition->getLocalLength() > 0)
     decompEntries = decomposition->getData(0);
 
-  auto rowMap       = decomposition->getMap();
-  auto comm         = rowMap->getComm();
-  const auto myRank = comm->getRank();
+  auto rowMap               = decomposition->getMap();
+  auto comm                 = rowMap->getComm();
+  const auto myRank         = comm->getRank();
+  const auto numProcs       = comm->getSize();
+  Xpetra::UnderlyingLib lib = rowMap->lib();
 
   Array<GO> myGIDs;
   myGIDs.reserve(decomposition->getLocalLength());
@@ -85,15 +87,22 @@ RepartitionUtilities<Scalar, LocalOrdinal, GlobalOrdinal, Node>::ConstructGIDs(R
   // Step 1: Find out how many processors send me data
   // partsIndexBase starts from zero, as the processors ids start from zero
   {
-    const int root = 0;
-    Kokkos::View<int*, Kokkos::HostSpace> mySends("mySends", comm->getSize());
-    for (typename map_type::const_iterator it = sendMap.begin(); it != sendMap.end(); it++)
-      mySends(it->first) = 1;
-    Kokkos::View<int*, Kokkos::HostSpace> numRecvsOnEachProc;
-    if (comm->getRank() == root)
-      numRecvsOnEachProc = Kokkos::View<int*, Kokkos::HostSpace>("numRecvsOnEachProc", comm->getSize());
-    Teuchos::reduce<int, int>(mySends.data(), numRecvsOnEachProc.data(), comm->getSize(), Teuchos::REDUCE_SUM, root, *comm);
-    Teuchos::scatter<int, int>(numRecvsOnEachProc.data(), 1, &numRecv, 1, root, *comm);
+    GO partsIndexBase       = 0;
+    RCP<Map> partsIHave     = MapFactory::Build(lib, Teuchos::OrdinalTraits<Xpetra::global_size_t>::invalid(), myParts(), partsIndexBase, comm);
+    RCP<Map> partsIOwn      = MapFactory::Build(lib, numProcs, myPart(), partsIndexBase, comm);
+    RCP<Export> partsExport = ExportFactory::Build(partsIHave, partsIOwn);
+
+    RCP<GOVector> partsISend    = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(partsIHave);
+    RCP<GOVector> numPartsIRecv = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(partsIOwn);
+    if (numSend) {
+      ArrayRCP<GO> partsISendData = partsISend->getDataNonConst(0);
+      for (int i = 0; i < numSend; i++)
+        partsISendData[i] = 1;
+    }
+    (numPartsIRecv->getDataNonConst(0))[0] = 0;
+
+    numPartsIRecv->doExport(*partsISend, *partsExport, Xpetra::ADD);
+    numRecv = (numPartsIRecv->getData(0))[0];
   }
 
   RCP<const Teuchos::MpiComm<int> > tmpic = rcp_dynamic_cast<const Teuchos::MpiComm<int> >(comm);
