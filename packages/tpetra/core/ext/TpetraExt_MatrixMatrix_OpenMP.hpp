@@ -200,7 +200,6 @@ void KernelWrappers<Scalar, LocalOrdinal, GlobalOrdinal, Tpetra::KokkosCompat::K
 
     // Grab the  Kokkos::SparseCrsMatrices
     const KCRS Ak = Aview.origMatrix->getLocalMatrixDevice();
-    // const KCRS & Bk = Bview.origMatrix->getLocalMatrixDevice();
 
     // Get the algorithm mode
     std::string alg = nodename + std::string(" algorithm");
@@ -218,8 +217,6 @@ void KernelWrappers<Scalar, LocalOrdinal, GlobalOrdinal, Tpetra::KokkosCompat::K
 
     // Do the multiply on whatever we've got
     typename KernelHandle::nnz_lno_t AnumRows = Ak.numRows();
-    //    typename KernelHandle::nnz_lno_t BnumRows = Bmerged->numRows();
-    //    typename KernelHandle::nnz_lno_t BnumCols = Bmerged->numCols();
     typename KernelHandle::nnz_lno_t BnumRows = Bmerged.numRows();
     typename KernelHandle::nnz_lno_t BnumCols = Bmerged.numCols();
 
@@ -229,7 +226,6 @@ void KernelWrappers<Scalar, LocalOrdinal, GlobalOrdinal, Tpetra::KokkosCompat::K
     KernelHandle kh;
     kh.create_spgemm_handle(alg_enum);
     kh.set_team_work_size(team_work_size);
-    //    KokkosSparse::spgemm_symbolic(&kh,AnumRows,BnumRows,BnumCols,Ak.graph.row_map,Ak.graph.entries,false,Bmerged->graph.row_map,Bmerged->graph.entries,false,row_mapC);
     KokkosSparse::spgemm_symbolic(&kh, AnumRows, BnumRows, BnumCols, Ak.graph.row_map, Ak.graph.entries, false, Bmerged.graph.row_map, Bmerged.graph.entries, false, row_mapC);
 
     size_t c_nnz_size = kh.get_spgemm_handle()->get_c_nnz();
@@ -237,7 +233,6 @@ void KernelWrappers<Scalar, LocalOrdinal, GlobalOrdinal, Tpetra::KokkosCompat::K
       entriesC = lno_nnz_view_t(Kokkos::ViewAllocateWithoutInitializing("entriesC"), c_nnz_size);
       valuesC  = scalar_view_t(Kokkos::ViewAllocateWithoutInitializing("valuesC"), c_nnz_size);
     }
-    //    KokkosSparse::spgemm_numeric(&kh,AnumRows,BnumRows,BnumCols,Ak.graph.row_map,Ak.graph.entries,Ak.values,false,Bmerged->graph.row_map,Bmerged->graph.entries,Bmerged->values,false,row_mapC,entriesC,valuesC);
     KokkosSparse::spgemm_numeric(&kh, AnumRows, BnumRows, BnumCols, Ak.graph.row_map, Ak.graph.entries, Ak.values, false, Bmerged.graph.row_map, Bmerged.graph.entries, Bmerged.values, false, row_mapC, entriesC, valuesC);
     kh.destroy_spgemm_handle();
 
