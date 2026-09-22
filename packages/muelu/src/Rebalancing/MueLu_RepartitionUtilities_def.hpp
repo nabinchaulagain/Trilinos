@@ -88,8 +88,8 @@ RepartitionUtilities<Scalar, LocalOrdinal, GlobalOrdinal, Node>::ConstructGIDs(R
   // partsIndexBase starts from zero, as the processors ids start from zero
   {
     GO partsIndexBase       = 0;
-    RCP<Map> partsIHave     = MapFactory ::Build(lib, Teuchos::OrdinalTraits<Xpetra::global_size_t>::invalid(), myParts(), partsIndexBase, comm);
-    RCP<Map> partsIOwn      = MapFactory ::Build(lib, numProcs, myPart(), partsIndexBase, comm);
+    RCP<Map> partsIHave     = MapFactory::Build(lib, Teuchos::OrdinalTraits<Xpetra::global_size_t>::invalid(), myParts(), partsIndexBase, comm);
+    RCP<Map> partsIOwn      = MapFactory::Build(lib, numProcs, myPart(), partsIndexBase, comm);
     RCP<Export> partsExport = ExportFactory::Build(partsIHave, partsIOwn);
 
     RCP<GOVector> partsISend    = Xpetra::VectorFactory<GO, LO, GO, NO>::Build(partsIHave);
