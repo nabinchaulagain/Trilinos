@@ -980,9 +980,7 @@ void lowCommunicationMakeColMapAndReindex(
     // Make a subview of ColIndices for remote GID sorting
     auto ColIndices_subview = Kokkos::subview(ColIndices_view, Kokkos::make_pair(NumLocalColGIDs, ColIndices_view.size()));
 
-    if (NumLocalColGIDs != static_cast<size_t>(numMyCols)) {
-      Kokkos::deep_copy(ColIndices_subview, RemoteGIDList_view);
-    }
+    Kokkos::deep_copy(ColIndices_subview, RemoteGIDList_view);
 
     using KeyViewTypePID = decltype(PIDList_view);
     using BinSortOpPID   = Kokkos::BinOp1D<KeyViewTypePID>;
