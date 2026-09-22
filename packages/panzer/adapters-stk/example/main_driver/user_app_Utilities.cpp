@@ -62,6 +62,7 @@
 #include <string>
 #include <iostream>
 #include <tuple>
+#include <type_traits>
 
 #include "user_app_Utilities.hpp"
 
@@ -257,4 +258,54 @@ user_app::buildTimeIntegrator(const Teuchos::RCP<Teuchos::ParameterList>& input_
   integrator->initializeSolutionHistory(0.0, x0);
 
   return integrator;
+}
+
+namespace {
+  template<typename NameGetter, typename CountGetter>
+  std::tuple<int,int> findIndexByName(const std::string& name,
+                                       const Thyra::ModelEvaluator<double>& me,
+                                       CountGetter get_count,
+                                       NameGetter get_names,
+                                       const std::string& type_label)
+  {
+    bool found = false;
+    int index = -1;
+    int sub_index = -1;
+    for (int i = 0; i < get_count(me); ++i) {
+      auto names = get_names(me, i);
+      using NamesType = decltype(names);
+      constexpr bool is_pointer = std::is_pointer_v<NamesType>;
+      const auto& names_ref = is_pointer ? *names : names;
+      for (Teuchos::Ordinal sub=0; sub < names_ref.size(); ++sub) {
+        if (names_ref[sub] == name) {
+          found = true;
+          index = i;
+          sub_index = sub;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    TEUCHOS_TEST_FOR_EXCEPTION(!found,std::runtime_error,
+      "ERROR: the " << type_label << " \"" << name << "\" is not a valid " << type_label << " name in the model evaluator!");
+
+    return {index,sub_index};
+  }
+}
+
+std::tuple<int,int> user_app::findParameterIndex(const std::string& p_name,const Thyra::ModelEvaluator<double>& me)
+{
+  return findIndexByName(p_name, me,
+                         [](const Thyra::ModelEvaluator<double>& m){ return m.Np(); },
+                         [](const Thyra::ModelEvaluator<double>& m, int i){ return m.get_p_names(i); },
+                         "parameter");
+}
+
+std::tuple<int,int> user_app::findResponseIndex(const std::string& g_name,const Thyra::ModelEvaluator<double>& me)
+{
+  return findIndexByName(g_name, me,
+                         [](const Thyra::ModelEvaluator<double>& m){ return m.Ng(); },
+                         [](const Thyra::ModelEvaluator<double>& m, int i){ return m.get_g_names(i); },
+                         "response");
 }
