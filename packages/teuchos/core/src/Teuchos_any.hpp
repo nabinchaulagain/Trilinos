@@ -338,16 +338,7 @@ ValueType& any_cast(any &operand)
     ,"any_cast<"<<ValueTypeName<<">(operand): Error, cast to type "
     << "any::holder<"<<ValueTypeName<<"> failed because the content is NULL"
     );
-  any::holder<ValueType>
-    *dyn_cast_content = dynamic_cast<any::holder<ValueType>*>(operand.access_content());
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    !dyn_cast_content, std::logic_error
-    ,"any_cast<"<<ValueTypeName <<">(operand): Error, cast to type "
-    << "any::holder<"<<ValueTypeName<<"> failed but should not have and the actual underlying type is \'"
-    << typeName(*operand.access_content()) << "!"
-    << "  The problem might be related to incompatible RTTI systems in static and shared libraries!"
-    );
-  return dyn_cast_content->held;
+  return static_cast<any::holder<ValueType>*>(operand.access_content())->held;
 }
 
 /*! \relates any
