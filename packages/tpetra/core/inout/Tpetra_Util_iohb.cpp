@@ -262,6 +262,7 @@ int readHB_info(const char* filename, int* M, int* N, int* nz, char** Type,
 
   if ((in_file = std::fopen(filename, "r")) == NULL) {
     std::fprintf(stderr, "Error: Cannot open file: %s\n", filename);
+    free(mat_type);
     return 0;
   }
 
