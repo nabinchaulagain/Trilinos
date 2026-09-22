@@ -4634,13 +4634,6 @@ struct SolveTridiags {
 
     // Compute v_2 = v_2 - C v_1
 
-    const local_ordinal_type local_subpartidx_schur = (local_subpartidx - 1) / 2;
-    const local_ordinal_type i0_schur               = local_subpartidx_schur == 0 ? pack_td_ptr_schur(partidx, local_subpartidx_schur) : pack_td_ptr_schur(partidx, local_subpartidx_schur) + 1;
-    const local_ordinal_type i0_offset              = local_subpartidx_schur == 0 ? i0 + 2 : i0 + 2;
-
-    (void)i0_schur;
-    (void)i0_offset;
-
 #if KOKKOS_VERSION >= 40799
     const auto one = KokkosKernels::ArithTraits<btdm_magnitude_type>::one();
 #else
