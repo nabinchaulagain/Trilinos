@@ -4517,11 +4517,19 @@ struct SolveTridiags {
   template <int B>
   struct SingleVectorSubLineTag {};
   template <int B>
+  struct MultiVectorSubLineTag {};
+  template <int B>
   struct SingleVectorApplyCTag {};
+  template <int B>
+  struct MultiVectorApplyCTag {};
   template <int B>
   struct SingleVectorSchurTag {};
   template <int B>
+  struct MultiVectorSchurTag {};
+  template <int B>
   struct SingleVectorApplyETag {};
+  template <int B>
+  struct MultiVectorApplyETag {};
   template <int B>
   struct SingleVectorCopyToFlatTag {};
   template <int B>
@@ -4621,14 +4629,10 @@ struct SolveTridiags {
     const local_ordinal_type r0    = part2packrowidx0_sub(partidx, local_subpartidx);
     const local_ordinal_type nrows = partptr_sub(subpartidx, 1) - partptr_sub(subpartidx, 0);
 
+    internal_vector_scratch_type_3d_view
+        WW(member.team_scratch(0), blocksize, blocksize, vector_loop_size);
+
     // Compute v_2 = v_2 - C v_1
-
-    const local_ordinal_type local_subpartidx_schur = (local_subpartidx - 1) / 2;
-    const local_ordinal_type i0_schur               = local_subpartidx_schur == 0 ? pack_td_ptr_schur(partidx, local_subpartidx_schur) : pack_td_ptr_schur(partidx, local_subpartidx_schur) + 1;
-    const local_ordinal_type i0_offset              = local_subpartidx_schur == 0 ? i0 + 2 : i0 + 2;
-
-    (void)i0_schur;
-    (void)i0_offset;
 
 #if KOKKOS_VERSION >= 40799
     const auto one = KokkosKernels::ArithTraits<btdm_magnitude_type>::one();
@@ -4761,6 +4765,9 @@ struct SolveTridiags {
 
     const local_ordinal_type r0    = part2packrowidx0_sub(partidx, local_subpartidx);
     const local_ordinal_type nrows = partptr_sub(subpartidx, 1) - partptr_sub(subpartidx, 0);
+
+    internal_vector_scratch_type_3d_view
+        WW(member.team_scratch(0), blocksize, blocksize, vector_loop_size);
 
     // Compute v_2 = v_2 - C v_1
 
@@ -4937,6 +4944,7 @@ struct SolveTridiags {
         write4DMultiVectorValuesToFile(part2packrowidx0_sub.extent(0), X_internal_scalar_values, "x_scalar_values_before_SingleVectorApplyCTag.mm");  \
         Kokkos::TeamPolicy<execution_space, SingleVectorApplyCTag<B>>                                                                                 \
             policy(packindices_sub.extent(0), team_size, vector_loop_size);                                                                           \
+        policy.set_scratch_size(0, Kokkos::PerTeam(per_team_scratch));                                                                                \
         Kokkos::parallel_for("SolveTridiags::TeamPolicy::run<SingleVector>",                                                                          \
                              policy, *this);                                                                                                          \
         write4DMultiVectorValuesToFile(part2packrowidx0_sub.extent(0), X_internal_scalar_values, "x_scalar_values_after_SingleVectorApplyCTag.mm");   \
@@ -4958,6 +4966,7 @@ struct SolveTridiags {
         write4DMultiVectorValuesToFile(part2packrowidx0_sub.extent(0), X_internal_scalar_values, "x_scalar_values_before_SingleVectorApplyETag.mm");  \
         Kokkos::TeamPolicy<execution_space, SingleVectorApplyETag<B>>                                                                                 \
             policy(packindices_sub.extent(0), team_size, vector_loop_size);                                                                           \
+        policy.set_scratch_size(0, Kokkos::PerTeam(per_team_scratch));                                                                                \
         Kokkos::parallel_for("SolveTridiags::TeamPolicy::run<SingleVector>",                                                                          \
                              policy, *this);                                                                                                          \
         write4DMultiVectorValuesToFile(part2packrowidx0_sub.extent(0), X_internal_scalar_values, "x_scalar_values_after_SingleVectorApplyETag.mm");   \
