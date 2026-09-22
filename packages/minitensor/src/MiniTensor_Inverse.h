@@ -405,6 +405,7 @@ namespace {
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> identity_precon(Tensor<T, N> const &A,
                                              RHS const &B) {
   return std::make_pair(A, B);
@@ -414,6 +415,7 @@ std::pair<Tensor<T, N>, RHS> identity_precon(Tensor<T, N> const &A,
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> diagonal_precon(Tensor<T, N> const &A,
                                              RHS const &B) {
   Vector<T, N> const
@@ -432,6 +434,7 @@ std::pair<Tensor<T, N>, RHS> diagonal_precon(Tensor<T, N> const &A,
 //
 //
 template <typename T, Index N, typename RHS>
+KOKKOS_INLINE_FUNCTION
 std::pair<Tensor<T, N>, RHS> maxabsrow_precon(Tensor<T, N> const &A, RHS &B) {
   Index const
   dimension = A.get_dimension();
