@@ -226,11 +226,10 @@ UtilitiesBase<Scalar, LocalOrdinal, GlobalOrdinal, Node>::
     rowmap_type rowptr("MueLu::GetThresholdedGraph::rowptr", lclA.numRows() + 1);
 
     LocalOrdinal nnz = 0;
-    entries_type dummy(Kokkos::ViewAllocateWithoutInitializing("MueLu::GetThresholdedGraph::indices"), 1);
     if (symScaled)
-      GetThresholded_Helper<decltype(diag), entries_type, Scalar, LocalOrdinal, GlobalOrdinal, Node, true, true, false>(A, threshold, rowptr, nnz, diag, dummy);
+      GetThresholded_Helper<decltype(diag), entries_type, Scalar, LocalOrdinal, GlobalOrdinal, Node, true, true, false>(A, threshold, rowptr, nnz, diag, entries_type());
     else
-      GetThresholded_Helper<decltype(diag), entries_type, Scalar, LocalOrdinal, GlobalOrdinal, Node, true, false, false>(A, threshold, rowptr, nnz, diag, dummy);
+      GetThresholded_Helper<decltype(diag), entries_type, Scalar, LocalOrdinal, GlobalOrdinal, Node, true, false, false>(A, threshold, rowptr, nnz, diag, entries_type());
 
     entries_type entries(Kokkos::ViewAllocateWithoutInitializing("MueLu::GetThresholdedGraph::indices"), nnz);
 
