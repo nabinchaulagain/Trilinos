@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
       std::cout << "   Matrix: " << mname << "(" << m << "x" << n << ")"
         << std::endl;
       delete [] e;
-
+      delete [] yt;
     }
     mybasker.Finalize();
 
@@ -271,6 +271,9 @@ int main(int argc, char* argv[])
   delete [] y;
   delete [] x;
   delete [] xhat;
+  delete [] col_ptr;
+  delete [] row_idx;
+  delete [] val;
   
   Kokkos::finalize();
 
