@@ -4698,7 +4698,7 @@ struct SolveTridiags {
       const local_ordinal_type partidx   = packptr(packidx);
       const local_ordinal_type npacks    = packptr(packidx + 1) - partidx;
       const local_ordinal_type pri0      = part2packrowidx0(partidx);
-      const local_ordinal_type i0        = IFPACK2_BTDC_MDSPAN_ACCESS(pack_td_ptr, partidx, 0);
+      const local_ordinal_type i0        = pack_td_ptr(partidx, 0);
       const local_ordinal_type r0        = pri0;
       const local_ordinal_type nrows     = partptr(partidx + 1) - partptr(partidx);
       const local_ordinal_type blocksize = (B == 0 ? D_internal_vector_values.extent(1) : B);
