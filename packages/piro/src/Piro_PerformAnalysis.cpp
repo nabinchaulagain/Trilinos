@@ -348,14 +348,7 @@ Piro::PerformROLSteadyAnalysis(
   Teuchos::RCP<Thyra::VectorBase<double>> lambda_vec = Thyra::createMember(x_space);
   ROL::Ptr<ROL::Vector<double> > rol_lambda_ptr = ROL::makePtr<ROL::ThyraVector<double>>(lambda_vec);
 
-  Teuchos::EVerbosityLevel analysisVerbosityLevel;
-  switch(analysisVerbosity) {
-    case 1: analysisVerbosityLevel= Teuchos::VERB_LOW; break;
-    case 2: analysisVerbosityLevel= Teuchos::VERB_MEDIUM; break;
-    case 3: analysisVerbosityLevel= Teuchos::VERB_HIGH; break;
-    case 4: analysisVerbosityLevel= Teuchos::VERB_EXTREME; break;
-    default: analysisVerbosityLevel= Teuchos::VERB_NONE;
-  }  
+  Teuchos::EVerbosityLevel analysisVerbosityLevel = getROLVerbosityLevel(analysisVerbosity);
   ROL::Ptr<ROL::Objective_SimOpt<double> > obj_ptr = ROL::makePtr<Piro::ThyraProductME_Objective_SimOpt<double>>(model, g_index, piroParams, analysisVerbosityLevel, observer);
   ROL::Ptr<ROL::Constraint_SimOpt<double> > constr_ptr = ROL::makePtr<Piro::ThyraProductME_Constraint_SimOpt<double>>(model, adjointModel, piroParams, analysisVerbosityLevel, observer);
 
@@ -373,19 +366,7 @@ Piro::PerformROLSteadyAnalysis(
   int seed = rolParams.get<int>("Seed For Thyra Randomize", 42);
 
   //! set initial guess (or use the one provided by the Model Evaluator)
-  std::string init_guess_type = rolParams.get<string>("Parameter Initial Guess Type", "From Model Evaluator");
-  if(init_guess_type == "Uniform Vector")
-    rol_p_ptr->setScalar(rolParams.get<double>("Uniform Parameter Guess", 1.0));
-  else if(init_guess_type == "Random Vector") {
-    Teuchos::Array<double> minmax(2); minmax[0] = -1; minmax[1] = 1;
-    minmax = rolParams.get<Teuchos::Array<double> >("Min And Max Of Random Parameter Guess", minmax);
-    ::Thyra::randomize<double>( minmax[0], minmax[1], ROL::dynamicPtrCast<ROL::ThyraVector<double>>(rol_p_ptr)->getVector().ptr());
-  }
-  else if(init_guess_type != "From Model Evaluator") {
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-              std::endl << "Piro::PerformROLSteadyAnalysis, ERROR: " <<
-              "Parameter Initial Guess Type \"" << init_guess_type << "\" is not Known.\nValid options are: \"Parameter Scalar Guess\", \"Uniform Vector\" and \"Random Vector\""<<std::endl);
-  }
+  setParameterInitialGuess(rolParams, *rol_p_ptr, "Piro::PerformROLSteadyAnalysis");
 
   //! test thyra implementation of ROL vector
   if(rolParams.get<bool>("Test Vector", false)) {
