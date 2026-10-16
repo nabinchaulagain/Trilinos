@@ -52,7 +52,6 @@
 #include "Ifpack2_BlockHelper.hpp"
 #include "Ifpack2_BlockComputeResidualVector.hpp"
 #include "Ifpack2_BlockComputeResidualAndSolve.hpp"
-#include "Ifpack2_Details_LightweightView.hpp"
 
 // need to interface this into cmake variable (or only use this flag when it is necessary)
 // #define IFPACK2_BLOCKTRIDICONTAINER_ENABLE_PROFILE
@@ -145,6 +144,16 @@ using Scratch = Kokkos::View<typename ViewType::data_type,
 // The functor body uses only data(), extent(), stride(), and operator(),
 // which are compatible with both types.
 // ------------------------------------------------------------------
+
+// Select the appropriate namespace for mdspan-related declarations.
+// In Kokkos < 5.3.0 (version < 50299), certain declarations live in
+// Kokkos::Experimental. In later versions they are promoted to the
+// top-level Kokkos namespace.
+#if (KOKKOS_VERSION >= 50299)
+namespace KokkosExperimental = Kokkos;
+#else
+namespace KokkosExperimental = Kokkos::Experimental;
+#endif
 
 #ifdef KOKKOS_ENABLE_IMPL_MDSPAN
 template <class OrigExtents, class NewIndexType, class Seq>
@@ -4754,14 +4763,26 @@ struct SolveTridiags {
       const local_ordinal_type r0        = pri0;
       const local_ordinal_type nrows     = partptr(partidx + 1) - partptr(partidx);
       const local_ordinal_type blocksize = (B == 0 ? D_internal_vector_values.extent(1) : B);
-      // Raw scratch allocation wrapped in a 32-bit-indexed LightweightView
+      // Raw scratch allocation wrapped in a 32-bit-indexed View
       // (LayoutRight, extents blocksize x vector_loop_size) instead of a Kokkos
       // scratch View, to keep indices/strides 32-bit for the single-vector
       // solve. The middle dimension (num_vectors == 1 here) is elided since we
       // specialize for the single-vector case.
-      using WW_u32_view_type =
-          Ifpack2::Details::LightweightView<internal_vector_type, 2,
-                                            Kokkos::LayoutRight>;
+#ifdef KOKKOS_ENABLE_IMPL_MDSPAN
+      using WW_u32_view_type = Kokkos::View<
+          internal_vector_type,
+          Kokkos::extents<uint32_t, Kokkos::dynamic_extent, Kokkos::dynamic_extent>,
+          Kokkos::layout_right,
+          KokkosExperimental::Accessor<internal_vector_type,
+                                          typename execution_space::scratch_memory_space,
+                                          Kokkos::MemoryTraits<Kokkos::Unmanaged>>>;
+#else
+      using WW_u32_view_type = Kokkos::View<
+          internal_vector_type**,
+          Kokkos::LayoutRight,
+          typename execution_space::scratch_memory_space,
+          Kokkos::MemoryTraits<Kokkos::Unmanaged>>;
+#endif
       constexpr size_t WW_alignment =
           Kokkos::max({sizeof(internal_vector_type), alignof(internal_vector_type),
                        static_cast<size_t>(execution_space::scratch_memory_space::ALIGN)});
