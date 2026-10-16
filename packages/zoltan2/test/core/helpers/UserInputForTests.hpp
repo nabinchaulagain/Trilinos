@@ -2551,12 +2551,11 @@ void UserInputForTests::setPamgenCoordinateMV()
   zgno_t numGlobalElements = pamgen_mesh->num_elems_global;
 
   // make a Tpetra map
-  RCP<Tpetra::Map<zlno_t, zgno_t, znode_t> > mp;
   Array<zgno_t> elementList(numelements);
   for (Array<zgno_t>::size_type k = 0; k < numelements; ++k) {
     elementList[k] = pamgen_mesh->element_order_map[k];
   }
-  mp = rcp (new map_t (numGlobalElements, elementList, 0, this->tcomm_));
+  auto mp = rcp (new map_t (numGlobalElements, elementList, 0, this->tcomm_));
 
   // set the xyz_ multivector
   xyz_ = RCP<tMVector_t>(new tMVector_t(mp, dimension, false));
